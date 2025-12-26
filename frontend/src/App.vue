@@ -1,153 +1,215 @@
 <template>
-  <div class="container">
-    <el-table :data="hardwareList" style="width: 100%" border row-key="device">
+  <el-container class="layout-container">
+    <el-aside width="200px" class="sidebar">
+      <div class="logo-area">
+        <h3>MacBox</h3>
+      </div>
+
+      <el-menu
+        :default-active="activeTab"
+        class="el-menu-vertical"
+        @select="(index: string) => activeTab = index"
+      >
+        <el-menu-item index="network">
+          <el-icon><Monitor /></el-icon>
+          <span>Interfaces</span>
+        </el-menu-item>
+
+        <el-menu-item index="tools">
+          <el-icon><Tools /></el-icon>
+          <span>Tools</span>
+        </el-menu-item>
+        
+        <el-menu-item index="settings" disabled>
+          <el-icon><Setting /></el-icon>
+          <span>Settings</span>
+        </el-menu-item>
+      </el-menu>
       
-      <el-table-column type="expand">
-        <template #default="props">
-          <div class="nested-container">
-            
-            <div class="nested-header">
-              <div class="title-area">
-                <h4>Services on {{ props.row.name }} ({{ props.row.device }})</h4>
-              </div>
-              
-              <el-button 
-                v-if="!isAdding(props.row.device)"
-                type="primary" size="small" 
-                @click="startAdding(props.row.device)">
-                + New Service
-              </el-button>
+     <div class="sidebar-footer">
+        <el-dropdown trigger="click" @command="(cmd: any) => theme = cmd">
+          <span class="theme-trigger">
+            <el-icon :size="16">
+              <component :is="getCurrentThemeIcon()" />
+            </el-icon>
+            <span class="theme-label">{{ theme.charAt(0).toUpperCase() + theme.slice(1) }}</span>
+          </span>
+          
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="light">
+                <el-icon><Sunny /></el-icon> Light
+              </el-dropdown-item>
+              <el-dropdown-item command="dark">
+                <el-icon><Moon /></el-icon> Dark
+              </el-dropdown-item>
+              <el-dropdown-item command="system">
+                <el-icon><Platform /></el-icon> System
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
 
-              <div v-else class="add-form-inline">
-                <el-input 
-                  v-model="newServiceState[props.row.device].name" 
-                  placeholder="Service Name (Unique)" 
-                  size="small" style="width: 180px" />
+        <div class="version-text">v{{ appVersion }}</div>
+      </div>
+    </el-aside>
+    <el-main class="main-content">
+      
+      <div v-if="activeTab === 'network'" class="view-container">
+        <el-table :data="hardwareList" style="width: 100%" border row-key="device">
+          
+          <el-table-column type="expand">
+            <template #default="props">
+              <div class="nested-container">
                 
-                <el-button type="success" size="small" @click="saveNewService(props.row.device, props.row.name)">
-                  Create
-                </el-button>
-                <el-button size="small" @click="cancelAdding(props.row.device)">
-                  Cancel
-                </el-button>
+                <div class="nested-header">
+                  <div class="title-area">
+                    <h4>Services on {{ props.row.name }} ({{ props.row.device }})</h4>
+                  </div>
+                  
+                  <el-button 
+                    v-if="!isAdding(props.row.device)"
+                    type="primary" size="small" 
+                    @click="startAdding(props.row.device)">
+                    + New Service
+                  </el-button>
+
+                  <div v-else class="add-form-inline">
+                    <el-input 
+                      v-model="newServiceState[props.row.device].name" 
+                      placeholder="Service Name (Unique)" 
+                      size="small" style="width: 180px" />
+                    
+                    <el-button type="success" size="small" @click="saveNewService(props.row.device, props.row.name)">
+                      Create
+                    </el-button>
+                    <el-button size="small" @click="cancelAdding(props.row.device)">
+                      Cancel
+                    </el-button>
+                  </div>
+                </div>
+
+                <el-table :data="props.row.logicInterfaces" border size="small" row-key="id">
+                  
+                  <el-table-column label="Name" width="200">
+                    <template #default="scope">
+                      <el-input v-if="isEditing(scope.row.id)" 
+                                v-model="editState[scope.row.id].name" size="small" />
+                      <span v-else>{{ scope.row.name }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="Method" width="150">
+                    <template #default="scope">
+                      
+                      <div v-if="isEditing(scope.row.id)" class="edit-cell-wrapper">
+                        <el-select 
+                          v-model="editState[scope.row.id].method" 
+                          size="small"
+                          class="full-width-select" 
+                        >
+                          <el-option label="DHCP" value="DHCP" />
+                          <el-option label="Manual" value="Manual" />
+                        </el-select>
+                      </div>
+
+                      <div v-else class="view-cell-wrapper">
+                        <el-tag :type="scope.row.method === 'DHCP' ? '' : 'warning'">
+                          {{ scope.row.method }}
+                        </el-tag>
+                      </div>
+
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="IP Address" width="160">
+                    <template #default="scope">
+                      <div v-if="isEditing(scope.row.id)" class="edit-cell-wrapper">
+                        <el-input 
+                            v-model="editState[scope.row.id].ip" 
+                            :disabled="editState[scope.row.id].method === 'DHCP'"
+                            size="small"
+                            :class="{ 'input-error': editState[scope.row.id].method === 'Manual' && !isValidIP(editState[scope.row.id].ip) }"
+                        />
+                      </div>
+                      <span v-else>{{ scope.row.ip }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="Mask / CIDR" width="160">
+                    <template #default="scope">
+                      <div v-if="isEditing(scope.row.id)" class="edit-cell-wrapper">
+                        <el-input 
+                            v-model="editState[scope.row.id].mask"
+                            :disabled="editState[scope.row.id].method === 'DHCP'" 
+                            placeholder="e.g. 255.255.255.0 or /24"
+                            size="small"
+                        />
+                      </div>
+                      <span v-else>{{ displayMask(scope.row.mask) }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="Gateway">
+                    <template #default="scope">
+                      <el-input v-if="isEditing(scope.row.id)" 
+                                v-model="editState[scope.row.id].gateway"
+                                :disabled="editState[scope.row.id].method === 'DHCP'"
+                                size="small" />
+                      <span v-else>{{ scope.row.gateway }}</span>
+                    </template>
+                  </el-table-column>
+
+                  <el-table-column label="Actions" width="140" fixed="right">
+                    <template #default="scope">
+                      
+                      <div v-if="isEditing(scope.row.id)">
+                        <el-button type="success" link size="small" @click="saveEdit(scope.row.id)">Save</el-button>
+                        <el-button type="info" link size="small" @click="cancelEdit(scope.row.id)">Cancel</el-button>
+                      </div>
+
+                      <div v-else>
+                        <el-button type="primary" link size="small" @click="startEdit(scope.row)">Edit</el-button>
+                        <el-button type="danger" link size="small" @click="deleteService(scope.row.name)">Del</el-button>
+                      </div>
+
+                    </template>
+                  </el-table-column>
+
+                </el-table>
               </div>
-            </div>
+            </template>
+          </el-table-column>
 
-            <el-table :data="props.row.logicInterfaces" border size="small" row-key="id">
-              
-              <el-table-column label="Name" width="200">
-                <template #default="scope">
-                  <el-input v-if="isEditing(scope.row.id)" 
-                            v-model="editState[scope.row.id].name" size="small" />
-                  <span v-else>{{ scope.row.name }}</span>
-                </template>
-              </el-table-column>
+          <el-table-column label="State" width="80" align="center">
+            <template #default="scope">
+              <el-tooltip 
+                :content="scope.row.isActive ? 'Active (Link Up)' : 'Inactive (Link Down)'" 
+                placement="top"
+                :hide-after="0"
+              >
+                <div :class="['status-dot', scope.row.isActive ? 'active' : 'inactive']"></div>
+              </el-tooltip>
+            </template>
+          </el-table-column>
 
-              <el-table-column label="Method" width="150">
-                <template #default="scope">
-                  
-                  <div v-if="isEditing(scope.row.id)" class="edit-cell-wrapper">
-                    <el-select 
-                      v-model="editState[scope.row.id].method" 
-                      size="small"
-                      class="full-width-select" 
-                    >
-                      <el-option label="DHCP" value="DHCP" />
-                      <el-option label="Manual" value="Manual" />
-                    </el-select>
-                  </div>
+          <el-table-column prop="name" label="Hardware Port" />
+          <el-table-column prop="device" label="Device" width="100" />
+          <el-table-column prop="mac" label="MAC" width="160" />
 
-                  <div v-else class="view-cell-wrapper">
-                    <el-tag :type="scope.row.method === 'DHCP' ? '' : 'warning'">
-                      {{ scope.row.method }}
-                    </el-tag>
-                  </div>
+        </el-table>
+      </div>
 
-                </template>
-              </el-table-column>
+      <div v-else-if="activeTab === 'tools'" class="view-container tools-view">
+        <el-empty description="Network Tools Coming Soon">
+          <template #extra>
+            <p>Ping, Traceroute, and Speedtest will be here.</p>
+          </template>
+        </el-empty>
+      </div>
 
-              <el-table-column label="IP Address" width="160">
-                <template #default="scope">
-                  <div v-if="isEditing(scope.row.id)" class="edit-cell-wrapper">
-                    <el-input 
-                        v-model="editState[scope.row.id].ip" 
-                        :disabled="editState[scope.row.id].method === 'DHCP'"
-                        size="small"
-                        :class="{ 'input-error': editState[scope.row.id].method === 'Manual' && !isValidIP(editState[scope.row.id].ip) }"
-                    />
-                  </div>
-                  <span v-else>{{ scope.row.ip }}</span>
-                </template>
-              </el-table-column>
-
-              <el-table-column label="Mask / CIDR" width="160">
-                <template #default="scope">
-                  <div v-if="isEditing(scope.row.id)" class="edit-cell-wrapper">
-                    <el-input 
-                        v-model="editState[scope.row.id].mask"
-                        :disabled="editState[scope.row.id].method === 'DHCP'" 
-                        placeholder="e.g. 255.255.255.0 or /24"
-                        size="small"
-                    />
-                  </div>
-                  <span v-else>{{ displayMask(scope.row.mask) }}</span>
-                </template>
-              </el-table-column>
-
-              <el-table-column label="Gateway">
-                <template #default="scope">
-                   <el-input v-if="isEditing(scope.row.id)" 
-                             v-model="editState[scope.row.id].gateway"
-                             :disabled="editState[scope.row.id].method === 'DHCP'"
-                             size="small" />
-                   <span v-else>{{ scope.row.gateway }}</span>
-                </template>
-              </el-table-column>
-
-              <el-table-column label="Actions" width="140" fixed="right">
-                <template #default="scope">
-                  
-                  <div v-if="isEditing(scope.row.id)">
-                    <el-button type="success" link size="small" @click="saveEdit(scope.row.id)">Save</el-button>
-                    <el-button type="info" link size="small" @click="cancelEdit(scope.row.id)">Cancel</el-button>
-                  </div>
-
-                  <div v-else>
-                    <el-button type="primary" link size="small" @click="startEdit(scope.row)">Edit</el-button>
-                    <el-button type="danger" link size="small" @click="deleteService(scope.row.name)">Del</el-button>
-                  </div>
-
-                </template>
-              </el-table-column>
-
-            </el-table>
-          </div>
-        </template>
-      </el-table-column>
-
-      <el-table-column label="State" width="80" align="center">
-        <template #default="scope">
-          <el-tooltip 
-            :content="scope.row.isActive ? 'Active (Link Up)' : 'Inactive (Link Down)'" 
-            placement="top"
-            :hide-after="0"
-          >
-            <div :class="['status-dot', scope.row.isActive ? 'active' : 'inactive']"></div>
-          </el-tooltip>
-        </template>
-      </el-table-column>
-
-      <el-table-column prop="name" label="Hardware Port" />
-      <el-table-column prop="device" label="Device" width="100" />
-      <el-table-column prop="mac" label="MAC" width="160" />
-
-    </el-table>
-  </div>
-  <div class="container">
-    <div class="app-footer">
-      macbox {{ appVersion }}
-    </div>
-  </div>
+    </el-main>
+  </el-container>
 </template>
 
 <script setup lang="ts">
@@ -156,9 +218,17 @@ import { network } from '../wailsjs/go/models'
 import { EventsOn } from '../wailsjs/runtime'
 import { GetAppVersion, CreateInterface, UpdateInterface, DeleteInterface } from '../wailsjs/go/main/App'
 import { isValidIP, maskToCidr, cidrToMask, isCidrInput } from './utils/netUtils'
+import { useTheme } from './utils/useTheme'
+import {
+  Monitor, Tools, Setting,
+  Moon, Sunny, Platform
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
+const { theme } = useTheme()
+
 const appVersion = ref("")
+const activeTab = ref('network')
 const hardwareList = ref<network.HardwareInterface[]>([])
 
 const handleNetworkUpdate = (data: network.HardwareInterface[]) => {
@@ -169,6 +239,12 @@ onMounted(async () => {
   const cancelSubscription = EventsOn("network-update", handleNetworkUpdate)
   appVersion.value = await GetAppVersion()
 })
+
+const getCurrentThemeIcon = () => {
+  if (theme.value === 'dark') return Moon
+  if (theme.value === 'light') return Sunny
+  return Platform
+}
 
 const editState = ref<Record<string, network.LogicInterface>>({})
 
@@ -285,6 +361,86 @@ const displayMask = (mask: string) => {
 </script>
 
 <style scoped>
+.layout-container {
+  height: 100vh;
+  display: flex;
+}
+
+.sidebar {
+  background-color: var(--el-bg-color-overlay); 
+  border-right: 1px solid var(--el-border-color);
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s;
+}
+
+.logo-area {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--el-border-color);
+  background: var(--el-bg-color);
+}
+.logo-area h3 {
+  margin: 0;
+  color: #409EFF;
+}
+
+.el-menu-vertical {
+  border-right: none;
+  background-color: transparent;
+  flex: 1;
+}
+
+.sidebar-footer {
+  padding: 15px;
+  border-top: 1px solid var(--el-border-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-trigger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  color: var(--el-text-color-regular);
+}
+.theme-trigger:hover {
+  background-color: var(--el-fill-color);
+}
+.theme-label {
+  font-size: 12px;
+}
+
+.version-text {
+  font-size: 10px;
+  color: var(--el-text-color-secondary);
+}
+
+.main-content {
+  padding: 20px;
+  background-color: var(--el-bg-color);
+  color: var(--el-text-color-primary);
+}
+
+.view-container {
+  height: 100%;
+}
+
+.tools-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+}
+
 .status-dot {
   width: 12px;
   height: 12px;
@@ -313,7 +469,7 @@ const displayMask = (mask: string) => {
 
 .nested-container {
   padding: 10px 20px;
-  background: #fafafa;
+  background: var(--el-bg-color);
 }
 .nested-header {
   display: flex;
@@ -347,15 +503,5 @@ const displayMask = (mask: string) => {
   display: flex;
   align-items: center;
   height: 24px;
-}
-
-.app-footer {
-  position: fixed;
-  bottom: 10px;
-  right: 15px;
-  font-size: 12px;
-  color: #909399;
-  pointer-events: none;
-  opacity: 0.7;
 }
 </style>
