@@ -67,7 +67,7 @@
           </el-button>
         </div>
 
-        <div class="version-text">v{{ appVersion }}</div>
+        <div class="version-text">{{ appVersion }}</div>
       </div>
     </el-aside>
     <el-main class="main-content">
