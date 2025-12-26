@@ -145,7 +145,7 @@
   </div>
   <div class="container">
     <div class="app-footer">
-      macbox v{{ appVersion }}
+      macbox {{ appVersion }}
     </div>
   </div>
 </template>
