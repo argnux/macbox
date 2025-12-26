@@ -6,7 +6,7 @@ export function CreateInterface(arg1:string,arg2:string):Promise<string>;
 
 export function DeleteInterface(arg1:string):Promise<string>;
 
-export function Println(arg1:string):Promise<void>;
+export function GetAppVersion():Promise<string>;
 
 export function RegisterModels():Promise<network.HardwareInterface>;
 

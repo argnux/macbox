@@ -7,7 +7,6 @@ export const maskToCidr = (mask: string): string => {
     if (!isValidIP(mask)) return ""
     const parts = mask.split('.').map(Number)
     let bits = 0
-    // Превращаем каждый октет в биты и считаем единицы
     for (const part of parts) {
         bits += (part >>> 0).toString(2).split('1').length - 1
     }

@@ -10,8 +10,8 @@ export function DeleteInterface(arg1) {
   return window['go']['main']['App']['DeleteInterface'](arg1);
 }
 
-export function Println(arg1) {
-  return window['go']['main']['App']['Println'](arg1);
+export function GetAppVersion() {
+  return window['go']['main']['App']['GetAppVersion']();
 }
 
 export function RegisterModels() {

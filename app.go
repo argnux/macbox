@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"macbox/internal/services"
 
 	"macbox/pkg/network"
@@ -10,13 +9,20 @@ import (
 
 // App struct
 type App struct {
-	ctx context.Context
-	ns  services.INetworkService
+	ctx     context.Context
+	version string
+	ns      services.INetworkService
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
+func NewApp(v string) *App {
+	return &App{
+		version: v,
+	}
+}
+
+func (a *App) GetAppVersion() string {
+	return a.version
 }
 
 // startup is called when the app starts. The context is saved
@@ -42,8 +48,4 @@ func (a *App) UpdateInterface(data network.UpdatePayload) string {
 
 func (a *App) RegisterModels() network.HardwareInterface {
 	return network.HardwareInterface{}
-}
-
-func (a *App) Println(text string) {
-	fmt.Println(text)
 }

@@ -19,9 +19,9 @@ type LogicInterface struct {
 }
 
 type UpdatePayload struct {
-	OldName string `json:"oldName"` // Чтобы найти, кого менять
-	NewName string `json:"newName"` // Если юзер захотел переименовать
-	Method  string `json:"method"`  // "DHCP" или "Manual"
+	OldName string `json:"oldName"`
+	NewName string `json:"newName"`
+	Method  string `json:"method"`
 	IP      string `json:"ip"`
 	Mask    string `json:"mask"`
 	Gateway string `json:"gateway"`

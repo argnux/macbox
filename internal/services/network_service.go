@@ -5,13 +5,6 @@ import (
 	"macbox/pkg/network"
 )
 
-type Mode int
-
-const (
-	ManualMode Mode = 1 << 0
-	DHCPMode   Mode = 1 << 1
-)
-
 type INetworkService interface {
 	StartLiveLoop(ctx context.Context)
 

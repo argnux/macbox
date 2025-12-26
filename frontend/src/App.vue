@@ -143,35 +143,38 @@
 
     </el-table>
   </div>
+  <div class="container">
+    <div class="app-footer">
+      macbox v{{ appVersion }}
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { network } from '../wailsjs/go/models'
 import { EventsOn } from '../wailsjs/runtime'
-import { CreateInterface, UpdateInterface, DeleteInterface } from '../wailsjs/go/main/App'
+import { GetAppVersion, CreateInterface, UpdateInterface, DeleteInterface } from '../wailsjs/go/main/App'
 import { isValidIP, maskToCidr, cidrToMask, isCidrInput } from './utils/netUtils'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-// Стейт данных
+const appVersion = ref("")
 const hardwareList = ref<network.HardwareInterface[]>([])
 
 const handleNetworkUpdate = (data: network.HardwareInterface[]) => {
   hardwareList.value = data
 }
 
-onMounted(() => {
+onMounted(async () => {
   const cancelSubscription = EventsOn("network-update", handleNetworkUpdate)
+  appVersion.value = await GetAppVersion()
 })
-
-// --- Actions ---
 
 const editState = ref<Record<string, network.LogicInterface>>({})
 
 const isEditing = (id: string) => !!editState.value[id]
 
 const startEdit = (row: network.LogicInterface) => {
-  // Делаем глубокую копию строки, чтобы не менять таблицу до сохранения
   editState.value[row.id] = JSON.parse(JSON.stringify(row))
 }
 
@@ -187,7 +190,6 @@ const saveEdit = async (id: string) => {
           ElMessage.error("Invalid IP Address format")
           return
       }
-      // Валидация Gateway (если он не пустой)
       if (draft.gateway && !isValidIP(draft.gateway)) {
           ElMessage.error("Invalid Gateway format")
           return
@@ -206,16 +208,13 @@ const saveEdit = async (id: string) => {
       ElMessage.error("Invalid Subnet Mask format")
       return
   }
-  
-  // Формируем пейлоад для Go
-  // draft.id - это СТАРОЕ имя (так как мы использовали имя как ID при загрузке)
-  // draft.name - это НОВОЕ имя (если юзер его поменял в инпуте)
+
   const payload = {
     oldName: draft.id,
     newName: draft.name,
     method:  draft.method,
     ip:      draft.ip,
-    mask:    finalMask, // Отправляем всегда Decimal
+    mask:    finalMask,
     gateway: draft.gateway
   }
 
@@ -225,7 +224,6 @@ const saveEdit = async (id: string) => {
   } else {
     ElMessage.success("Updated successfully")
     delete editState.value[id]
-    // Тут можно дернуть ручное обновление списка, если events приходят редко
   }
 }
 
@@ -240,17 +238,14 @@ const deleteService = async (name: string) => {
         type: 'warning',
       }
     )
-    
-    // Если юзер нажал ОК, код пойдет дальше. Если Cancel - вылетит в catch
+
     const err = await DeleteInterface(name)
     if (err) {
       ElMessage.error(err)
     } else {
       ElMessage.success("Deleted successfully")
-      // Тут можно вызвать обновление данных, если events задерживаются
     }
   } catch (error) {
-    // Юзер нажал отмену, ничего не делаем
     console.log("Delete canceled")
   }
 }
@@ -274,19 +269,16 @@ const saveNewService = async (deviceID: string, hardwarePortName: string) => {
     return
   }
 
-  // Вызываем Go
   const err = await CreateInterface(hardwarePortName, form.name)
   if (err) {
     ElMessage.error(err)
   } else {
     ElMessage.success(`Service ${form.name} created!`)
     delete newServiceState.value[deviceID]
-    // Новый сервис появится в таблице сам, когда прилетит event "network-update"
   }
 }
 
 const displayMask = (mask: string) => {
-    // Пытаемся показать красиво (CIDR). Если маска "кривая", показываем как есть.
     const cidr = maskToCidr(mask)
     return cidr ? `${mask} (${cidr})` : mask
 }
@@ -355,5 +347,15 @@ const displayMask = (mask: string) => {
   display: flex;
   align-items: center;
   height: 24px;
+}
+
+.app-footer {
+  position: fixed;
+  bottom: 10px;
+  right: 15px;
+  font-size: 12px;
+  color: #909399;
+  pointer-events: none;
+  opacity: 0.7;
 }
 </style>
