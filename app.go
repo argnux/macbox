@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"macbox/internal/services"
+
+	"macbox/pkg/network"
 )
 
 // App struct
 type App struct {
 	ctx context.Context
+	ns  services.INetworkService
 }
 
 // NewApp creates a new App application struct
@@ -19,9 +23,27 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	a.ns = services.NewNetworkService()
+
+	go a.ns.StartLiveLoop(ctx)
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
+func (a *App) CreateInterface(hardwarePortName string, newServiceName string) string {
+	return a.ns.CreateInterface(hardwarePortName, newServiceName)
+}
+
+func (a *App) DeleteInterface(serviceName string) string {
+	return a.ns.DeleteInterface(serviceName)
+}
+
+func (a *App) UpdateInterface(data network.UpdatePayload) string {
+	return a.ns.UpdateInterface(data)
+}
+
+func (a *App) RegisterModels() network.HardwareInterface {
+	return network.HardwareInterface{}
+}
+
+func (a *App) Println(text string) {
+	fmt.Println(text)
 }
