@@ -199,11 +199,37 @@
       </div>
 
       <div v-else-if="activeTab === 'tools'" class="view-container tools-view">
-        <el-empty description="Network Tools Coming Soon">
-          <template #extra>
-            <p>Ping, Traceroute, and Speedtest will be here.</p>
-          </template>
-        </el-empty>
+        <div class="tools-collapse">
+          <el-collapse v-model="activeTool" accordion>
+            <el-collapse-item title="Ping Tool" name="1">
+
+              <div class="controls-row">
+                <el-input v-model="targetIp" placeholder="IP Address" style="width: 180px" :disabled="isPinging" />
+
+                <el-checkbox v-model="isInfinite" label="Infinite" border :disabled="isPinging"
+                  style="margin-right: 10px;" />
+
+                <el-input-number v-if="!isInfinite" v-model="packetCount" :min="1" :max="100" style="width: 100px"
+                  :disabled="isPinging" controls-position="right" />
+
+                <el-button type="primary" @click="handleStartPing" :disabled="isPinging || !targetIp"
+                  :loading="isPinging">
+                  {{ isPinging ? 'Pinging...' : 'Start' }}
+                </el-button>
+
+                <el-button type="danger" @click="handleStopPing" :disabled="!isPinging">
+                  Stop
+                </el-button>
+              </div>
+
+              <div class="log-container">
+                <el-input ref="textareaRef" v-model="pingLogs" type="textarea" :rows="8" readonly
+                  class="console-output" />
+              </div>
+
+            </el-collapse-item>
+          </el-collapse>
+        </div>
       </div>
 
     </el-main>
@@ -211,19 +237,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, nextTick, onMounted } from 'vue'
 import { network, services } from '../wailsjs/go/models'
 import { EventsOn } from '../wailsjs/runtime'
 import {
   GetAppVersion, CreateInterface, UpdateInterface,
-  DeleteInterface, CheckUpdate, InstallUpdate
+  DeleteInterface, CheckUpdate, InstallUpdate,
+  StartPing, StopPing
 } from '../wailsjs/go/main/App'
 import { isValidIP, maskToCidr, cidrToMask, isCidrInput } from './utils/netUtils'
 import { useTheme } from './utils/useTheme'
 import {
   Monitor, Tools, Setting,
   Moon, Sunny, Platform,
-  Download, Refresh
+  Download
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -233,6 +260,48 @@ const appVersion = ref("")
 const activeTab = ref('network')
 const hardwareList = ref<network.HardwareInterface[]>([])
 
+const activeTool = ref('0')
+const targetIp = ref('')
+const packetCount = ref(4)
+const pingLogs = ref('')
+const isInfinite = ref(false)
+const isPinging = ref(false)
+const textareaRef = ref<any>(null)
+
+const scrollToBottom = async () => {
+  await nextTick()
+  if (textareaRef.value) {
+    const innerTextarea = textareaRef.value.textarea
+    if (innerTextarea) {
+      innerTextarea.scrollTop = innerTextarea.scrollHeight
+    }
+  }
+}
+
+const handleStartPing = async () => {
+  if (!targetIp.value) return
+
+  pingLogs.value = `> Pinging ${targetIp.value}...\n`
+  isPinging.value = true
+
+  try {
+    const count = isInfinite.value ? 0 : packetCount.value
+    await StartPing(targetIp.value, count)
+  } catch (err) {
+    pingLogs.value += `\nError: ${err}`
+  } finally {
+    isPinging.value = false
+    pingLogs.value += '\n> Done.'
+    scrollToBottom()
+  }
+}
+
+const handleStopPing = async () => {
+  await StopPing()
+  isPinging.value = false
+  pingLogs.value += '\n> Stopped by user.'
+}
+
 const updateAvailable = ref<services.ReleaseInfo>()
 const isUpdating = ref(false)
 
@@ -241,7 +310,13 @@ const handleNetworkUpdate = (data: network.HardwareInterface[]) => {
 }
 
 onMounted(async () => {
-  const cancelSubscription = EventsOn("network-update", handleNetworkUpdate)
+  EventsOn("network-update", handleNetworkUpdate)
+
+  EventsOn("ping-log", (msg: string) => {
+    pingLogs.value += msg
+    scrollToBottom()
+  })
+
   appVersion.value = await GetAppVersion()
 
   const release = await CheckUpdate()
@@ -462,6 +537,40 @@ const displayMask = (mask: string) => {
 
 .view-container {
   height: 100%;
+}
+
+.tools-collapse {
+  width: 100%;
+  height: 100%;
+}
+
+.controls-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.log-container {
+  margin-top: 10px;
+}
+
+.console-output :deep(.el-textarea__inner) {
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+  border-color: var(--el-border-color);
+
+  transition: all 0.3s;
+}
+
+html.dark .console-output :deep(.el-textarea__inner) {
+  background-color: #1e1e1e;
+  color: #67C23A;
+  border-color: #4c4d4f;
 }
 
 .tools-view {

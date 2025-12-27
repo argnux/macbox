@@ -26,6 +26,14 @@ export function RegisterModels() {
   return window['go']['main']['App']['RegisterModels']();
 }
 
+export function StartPing(arg1, arg2) {
+  return window['go']['main']['App']['StartPing'](arg1, arg2);
+}
+
+export function StopPing() {
+  return window['go']['main']['App']['StopPing']();
+}
+
 export function UpdateInterface(arg1) {
   return window['go']['main']['App']['UpdateInterface'](arg1);
 }

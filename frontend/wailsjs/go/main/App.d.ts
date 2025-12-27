@@ -15,4 +15,8 @@ export function InstallUpdate(arg1:services.ReleaseInfo):Promise<string>;
 
 export function RegisterModels():Promise<network.HardwareInterface>;
 
+export function StartPing(arg1:string,arg2:number):Promise<string>;
+
+export function StopPing():Promise<void>;
+
 export function UpdateInterface(arg1:network.UpdatePayload):Promise<string>;

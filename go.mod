@@ -7,6 +7,7 @@ toolchain go1.24.5
 require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/minio/selfupdate v0.6.0
+	github.com/prometheus-community/pro-bing v0.7.0
 	github.com/wailsapp/wails/v2 v2.11.0
 )
 
@@ -37,6 +38,7 @@ require (
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 )
