@@ -50,6 +50,18 @@ func (u *UpdateService) SetContext(ctx context.Context) {
 	u.ctx = ctx
 }
 
+func (u *UpdateService) findCompatibleAssetUrl(assets []ReleaseAsset) string {
+	targetArch := goruntime.GOARCH
+
+	for _, asset := range assets {
+		name := strings.ToLower(asset.Name)
+		if strings.HasSuffix(name, ".zip") && strings.Contains(name, targetArch) {
+			return asset.BrowserDownloadURL
+		}
+	}
+	return ""
+}
+
 func (u *UpdateService) CheckForUpdates() *ReleaseInfo {
 	if u.currentVersion == "dev" {
 		runtime.LogInfo(u.ctx, "Update Check: Dev mode, skipping.")
@@ -75,6 +87,11 @@ func (u *UpdateService) CheckForUpdates() *ReleaseInfo {
 	vCurrent, err2 := semver.Make(cleanCurrentTag)
 
 	if err1 == nil && err2 == nil && vNew.GT(vCurrent) {
+		if u.findCompatibleAssetUrl(release.Assets) == "" {
+			runtime.LogInfo(u.ctx, "Update found ("+release.TagName+"), but assets are not ready yet.")
+			return nil
+		}
+
 		return &release
 	}
 
@@ -86,16 +103,7 @@ func (u *UpdateService) PerformUpdate(release *ReleaseInfo) string {
 		return "Cannot update in dev mode"
 	}
 
-	var downloadUrl string
-	targetArch := "arm64"
-
-	for _, asset := range release.Assets {
-		name := strings.ToLower(asset.Name)
-		if strings.HasSuffix(name, ".zip") && strings.Contains(name, targetArch) {
-			downloadUrl = asset.BrowserDownloadURL
-			break
-		}
-	}
+	downloadUrl := u.findCompatibleAssetUrl(release.Assets)
 
 	if downloadUrl == "" {
 		return "No compatible update file found in release"
