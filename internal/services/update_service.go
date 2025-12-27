@@ -70,8 +70,9 @@ func (u *UpdateService) CheckForUpdates() *ReleaseInfo {
 	}
 
 	cleanTag := strings.TrimPrefix(release.TagName, "v")
+	cleanCurrentTag := strings.TrimPrefix(u.currentVersion, "v")
 	vNew, err1 := semver.Make(cleanTag)
-	vCurrent, err2 := semver.Make(u.currentVersion)
+	vCurrent, err2 := semver.Make(cleanCurrentTag)
 
 	if err1 == nil && err2 == nil && vNew.GT(vCurrent) {
 		return &release
