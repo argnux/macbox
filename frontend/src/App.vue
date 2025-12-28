@@ -20,6 +20,13 @@
           <span>Tools</span>
         </el-menu-item>
 
+        <el-menu-item index="watcher">
+          <el-icon>
+            <View />
+          </el-icon>
+          <span>Watcher</span>
+        </el-menu-item>
+
         <el-menu-item index="settings" disabled>
           <el-icon>
             <Setting />
@@ -232,6 +239,14 @@
         </div>
       </div>
 
+      <div v-else-if="activeTab === 'watcher'" class="view-container watcher-view">
+        <el-empty description="Watcher Coming Soon">
+          <template #extra>
+            <p>Watch UDP (and may be TCP) packets on port. Parse it or not. Whatever you want.</p>
+          </template>
+        </el-empty>
+      </div>
+
     </el-main>
   </el-container>
 </template>
@@ -250,7 +265,7 @@ import { useTheme } from './utils/useTheme'
 import {
   Monitor, Tools, Setting,
   Moon, Sunny, Platform,
-  Download
+  Download, View
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
