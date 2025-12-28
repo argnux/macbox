@@ -240,11 +240,97 @@
       </div>
 
       <div v-else-if="activeTab === 'watcher'" class="view-container watcher-view">
-        <el-empty description="Watcher Coming Soon">
-          <template #extra>
-            <p>Watch UDP (and may be TCP) packets on port. Parse it or not. Whatever you want.</p>
-          </template>
-        </el-empty>
+
+        <el-card shadow="never" class="control-panel">
+          <el-form :inline="true" size="default">
+
+            <el-form-item label="Protocol">
+              <el-select v-model="config.protocol" style="width: 100px">
+                <el-option label="UDP" value="udp" />
+                <el-option label="TCP" value="tcp" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="Port">
+              <el-input-number v-model="config.port" :min="1" :max="65535" controls-position="right"
+                style="width: 120px" />
+            </el-form-item>
+
+            <el-form-item label="Parser">
+              <el-select v-model="config.parser" placeholder="Select Parser" style="width: 160px">
+                <el-option label="Raw (Hex only)" value="raw" />
+                <el-option label="ASCII String" value="ascii" />
+                <el-option label="MAVLink (Mock)" value="mavlink" />
+                <el-option label="JSON Structure" value="json" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item>
+              <el-button :type="isWatching ? 'danger' : 'success'" :icon="isWatching ? 'VideoPause' : 'VideoPlay'"
+                @click="toggleWatcher">
+                {{ isWatching ? 'Stop' : 'Start Listening' }}
+              </el-button>
+
+              <el-button icon="Delete" @click="clearLogs" :disabled="packets.length === 0">
+                Clear
+              </el-button>
+            </el-form-item>
+
+            <el-form-item style="float: right; margin-right: 0;">
+              <el-switch v-model="autoScroll" active-text="Auto-scroll" />
+            </el-form-item>
+          </el-form>
+        </el-card>
+
+        <div class="workspace">
+
+          <div class="packet-list" ref="listContainer">
+            <el-table ref="tableRef" :data="packets" style="width: 100%; height: 100%" highlight-current-row
+              @row-click="selectPacket" size="small" border>
+              <el-table-column prop="timestamp" label="Time" width="120">
+                <template #default="scope">
+                  <span class="mono-text">{{ formatTime(scope.row.timestamp) }}</span>
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="size" label="Size" width="80" align="right">
+                <template #default="scope">
+                  {{ scope.row.size }} B
+                </template>
+              </el-table-column>
+
+              <el-table-column label="Preview" min-width="200">
+                <template #default="scope">
+                  <span class="mono-text preview-text">{{ getPreview(scope.row) }}</span>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+
+          <div class="packet-details">
+            <el-divider content-position="left">Packet Inspector</el-divider>
+
+            <div v-if="selectedPacket" class="details-content">
+              <div class="meta-row">
+                <el-tag size="small">{{ selectedPacket.protocol.toUpperCase() }}</el-tag>
+                <span class="meta-info">Port: {{ config.port }}</span>
+                <span class="meta-info">Size: {{ selectedPacket.size }} bytes</span>
+              </div>
+
+              <div class="section-title">Parsed Output ({{ config.parser }})</div>
+              <div class="code-block parsed-view">
+                {{ parsePacket(selectedPacket) }}
+              </div>
+
+              <div class="section-title">Raw Hex Dump</div>
+              <div class="code-block hex-view">
+                {{ toHexDump(selectedPacket.payload) }}
+              </div>
+            </div>
+
+            <el-empty v-else description="Select a packet to inspect" image-size="60" />
+          </div>
+        </div>
       </div>
 
     </el-main>
@@ -252,7 +338,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick, onMounted, onBeforeUnmount, reactive } from 'vue'
 import { network, services } from '../wailsjs/go/models'
 import { EventsOn } from '../wailsjs/runtime'
 import {
@@ -267,7 +353,7 @@ import {
   Moon, Sunny, Platform,
   Download, View
 } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, ElTable } from 'element-plus'
 
 const { theme } = useTheme()
 
@@ -283,8 +369,164 @@ const isInfinite = ref(false)
 const isPinging = ref(false)
 const textareaRef = ref<any>(null)
 
+// Begin (Watcher)
+type ProtocolType = 'udp' | 'tcp'
+type ParserType = 'raw' | 'ascii' | 'mavlink' | 'json'
+
+interface Packet {
+  id: number
+  timestamp: Date
+  protocol: ProtocolType
+  size: number
+  payload: Uint8Array
+}
+
+interface WatcherConfig {
+  protocol: ProtocolType
+  port: number
+  parser: ParserType
+}
+
+const tableRef = ref<InstanceType<typeof ElTable> | null>(null)
+const isWatching = ref<boolean>(false)
+const autoScroll = ref<boolean>(true)
+const packets = ref<Packet[]>([])
+const selectedPacket = ref<Packet | null>(null)
+let mockTimer: number | null = null
+
+const config = reactive<WatcherConfig>({
+  protocol: 'udp',
+  port: 8080,
+  parser: 'raw'
+})
+
+const toggleWatcher = () => {
+  if (isWatching.value) {
+    stopWatcher()
+  } else {
+    startWatcher()
+  }
+}
+
+const startWatcher = () => {
+  isWatching.value = true
+  mockTimer = setInterval(() => {
+    addMockPacket()
+  }, 800)
+}
+
+const stopWatcher = () => {
+  isWatching.value = false
+  if (mockTimer !== null) {
+    clearInterval(mockTimer)
+    mockTimer = null
+  }
+}
+
+const clearLogs = () => {
+  packets.value = []
+  selectedPacket.value = null
+}
+
+const selectPacket = (row: Packet) => {
+  selectedPacket.value = row
+}
+
+const formatTime = (date: Date): string => {
+  return date.toLocaleTimeString('en-US', { hour12: false }) + '.' + date.getMilliseconds().toString().padStart(3, '0')
+}
+
+const addMockPacket = async () => {
+  const size = Math.floor(Math.random() * 50) + 10
+  const payload = new Uint8Array(size)
+  window.crypto.getRandomValues(payload)
+
+  const packet: Packet = {
+    id: Date.now() + Math.random(),
+    timestamp: new Date(),
+    protocol: config.protocol,
+    size: size,
+    payload: payload
+  }
+
+  packets.value.push(packet)
+
+  if (packets.value.length > 1000) {
+    packets.value.shift()
+  }
+
+  if (autoScroll.value) {
+    await nextTick()
+    scrollToBottom()
+  }
+}
+
+const getPreview = (packet: Packet): string => {
+  const slice = packet.payload.slice(0, 12)
+  const hexString = Array.from(slice)
+    .map(b => b.toString(16).padStart(2, '0').toUpperCase())
+    .join(' ')
+
+  return hexString + (packet.size > 12 ? '...' : '')
+}
+
+const parsePacket = (packet: Packet): string => {
+  if (config.parser === 'raw') {
+    return 'Raw bytes mode. See Hex Dump below.'
+  }
+
+  if (config.parser === 'ascii') {
+    let res = ''
+    packet.payload.forEach((b) => {
+      res += (b > 31 && b < 127) ? String.fromCharCode(b) : '.'
+    })
+    return res
+  }
+
+  if (config.parser === 'mavlink') {
+    const msgId = packet.payload[0] ?? 0
+    const seq = packet.payload[1] ?? 0
+    return `[Mock] MAVLink Frame: MSG_ID=${msgId} SEQ=${seq}`
+  }
+
+  if (config.parser === 'json') {
+    return JSON.stringify({
+      mock_key: "value",
+      data: Array.from(packet.payload.slice(0, 3))
+    }, null, 2)
+  }
+
+  return 'Unknown parser'
+}
+
+const toHexDump = (buffer: Uint8Array): string => {
+  const hex = Array.from(buffer).map(b => b.toString(16).padStart(2, '0').toUpperCase())
+  let output = ''
+  for (let i = 0; i < hex.length; i += 16) {
+    const chunk = hex.slice(i, i + 16)
+    output += chunk.join(' ') + '\n'
+  }
+  return output
+}
+
+onBeforeUnmount(() => {
+  if (mockTimer !== null) clearInterval(mockTimer)
+})
+// End (Watcher)
+
 const scrollToBottom = async () => {
   await nextTick()
+
+  // Start (Watcher)
+  if (tableRef.value) {
+    const scrollWrapper = tableRef.value.$el.querySelector('.el-scrollbar__wrap')
+    if (scrollWrapper) {
+      scrollWrapper.scrollTop = scrollWrapper.scrollHeight
+      return
+    }
+  }
+  // End (Watcher)
+
   if (textareaRef.value) {
     const innerTextarea = textareaRef.value.textarea
     if (innerTextarea) {
@@ -680,4 +922,144 @@ html.dark .console-output :deep(.el-textarea__inner) {
     transform: translateY(0);
   }
 }
+
+/* Start (Watcher) */
+.watcher-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.control-panel {
+  flex-shrink: 0;
+}
+
+.control-panel :deep(.el-card__body) {
+  padding: 10px 15px;
+}
+
+.control-panel :deep(.el-form--inline) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow-x: auto;
+}
+
+.control-panel :deep(.el-form-item) {
+  margin-bottom: 0;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.control-panel :deep(.el-form-item:last-child) {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+.workspace {
+  flex-grow: 1;
+  height: 0;
+
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 4px;
+  background-color: var(--el-bg-color);
+}
+
+.packet-list {
+  flex: 2;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid var(--el-border-color-light);
+}
+
+.packet-details {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--el-bg-color-overlay);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.details-content {
+  padding: 15px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.meta-row {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 15px;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
+
+.section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+  margin-top: 20px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mono-text {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+}
+
+.preview-text {
+  color: var(--el-color-primary);
+  opacity: 0.9;
+}
+
+.code-block {
+  background-color: var(--el-fill-color-lighter);
+  border: 1px solid var(--el-border-color-lighter);
+  color: var(--el-text-color-primary);
+  padding: 12px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.hex-view {
+  opacity: 0.9;
+}
+
+.parsed-view {
+  color: var(--el-color-primary-dark-2);
+  font-weight: 500;
+}
+
+.code-block::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.code-block::-webkit-scrollbar-thumb {
+  background-color: var(--el-border-color-darker);
+  border-radius: 3px;
+}
+
+.code-block::-webkit-scrollbar-track {
+  background-color: var(--el-fill-color-lighter);
+}
+
+/* End (Watcher) */
 </style>
