@@ -245,33 +245,44 @@
           <el-form :inline="true" size="default">
 
             <el-form-item label="Protocol">
-              <el-select v-model="config.protocol" style="width: 100px">
+              <el-select v-model="config.protocol" :disabled="isWatching" style="width: 100px">
                 <el-option label="UDP" value="udp" />
                 <el-option label="TCP" value="tcp" />
               </el-select>
             </el-form-item>
 
             <el-form-item label="Port">
-              <el-input-number v-model="config.port" :min="1" :max="65535" controls-position="right"
-                style="width: 120px" />
+              <el-input-number v-model="config.port" :disabled="isWatching" :min="1" :max="65535"
+                controls-position="right" style="width: 120px" />
             </el-form-item>
 
             <el-form-item label="Parser">
-              <el-select v-model="config.parser" placeholder="Select Parser" style="width: 160px">
-                <el-option label="Raw (Hex only)" value="raw" />
-                <el-option label="ASCII String" value="ascii" />
-                <el-option label="MAVLink (Mock)" value="mavlink" />
-                <el-option label="JSON Structure" value="json" />
+              <el-select v-model="config.parser" placeholder="Select Parser" style="width: 220px"
+                :loading="availableParsers.length === 0" :disabled="isWatching">
+                <el-option v-for="item in availableParsers" :key="item.id" :label="item.name" :value="item.id">
+                  <div class="parser-option">
+                    <span class="option-name">{{ item.name }}</span>
+                    <span class="option-desc" v-if="item.description">
+                      {{ item.description }}
+                    </span>
+                  </div>
+                </el-option>
               </el-select>
             </el-form-item>
 
             <el-form-item>
-              <el-button :type="isWatching ? 'danger' : 'success'" :icon="isWatching ? 'VideoPause' : 'VideoPlay'"
-                @click="toggleWatcher">
-                {{ isWatching ? 'Stop' : 'Start Listening' }}
+              <el-button :type="isWatching ? 'danger' : 'success'" @click="toggleWatcher" align="center"
+                style="width: 140px">
+                <el-icon v-if="!isWatching">
+                  <VideoPlay />
+                </el-icon>
+                <el-icon v-else>
+                  <VideoPause />
+                </el-icon>
+                <span>{{ isWatching ? 'Stop' : 'Start Listening' }}</span>
               </el-button>
 
-              <el-button icon="Delete" @click="clearLogs" :disabled="packets.length === 0">
+              <el-button @click="clearLogs" :disabled="packets.length === 0">
                 Clear
               </el-button>
             </el-form-item>
@@ -287,15 +298,21 @@
           <div class="packet-list" ref="listContainer">
             <el-table ref="tableRef" :data="packets" style="width: 100%; height: 100%" highlight-current-row
               @row-click="selectPacket" size="small" border>
-              <el-table-column prop="timestamp" label="Time" width="120">
+              <el-table-column prop="timestamp" label="Time" width="105">
                 <template #default="scope">
                   <span class="mono-text">{{ formatTime(scope.row.timestamp) }}</span>
                 </template>
               </el-table-column>
 
-              <el-table-column prop="size" label="Size" width="80" align="right">
+              <el-table-column prop="size" label="Size" width="65" align="right">
                 <template #default="scope">
                   {{ scope.row.size }} B
+                </template>
+              </el-table-column>
+
+              <el-table-column prop="from_ip" label="From" width="150">
+                <template #default="scope">
+                  <span class="mono-text">{{ scope.row.from_ip }}</span>
                 </template>
               </el-table-column>
 
@@ -313,13 +330,17 @@
             <div v-if="selectedPacket" class="details-content">
               <div class="meta-row">
                 <el-tag size="small">{{ selectedPacket.protocol.toUpperCase() }}</el-tag>
-                <span class="meta-info">Port: {{ config.port }}</span>
+                <span class="meta-info">Port: {{ selectedPacket.port }}</span>
                 <span class="meta-info">Size: {{ selectedPacket.size }} bytes</span>
               </div>
 
-              <div class="section-title">Parsed Output ({{ config.parser }})</div>
-              <div class="code-block parsed-view">
-                {{ parsePacket(selectedPacket) }}
+              <div class="section-title">Parsed Output ({{ selectedPacket.parser }})</div>
+              <div class="code-block-wrapper">
+                <template v-if="selectedPacket.parsed_data?.message" class="code-block raw-text">
+                  {{ selectedPacket.parsed_data.message }}
+                </template>
+
+                <pre v-else class="code-block json-view" v-html="syntaxHighlight(selectedPacket.parsed_data)"></pre>
               </div>
 
               <div class="section-title">Raw Hex Dump</div>
@@ -338,20 +359,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onBeforeUnmount, reactive } from 'vue'
-import { network, services } from '../wailsjs/go/models'
+import { ref, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
+import { network, watcher, services } from '../wailsjs/go/models'
 import { EventsOn } from '../wailsjs/runtime'
 import {
   GetAppVersion, CreateInterface, UpdateInterface,
   DeleteInterface, CheckUpdate, InstallUpdate,
-  StartPing, StopPing
+  StartPing, StopPing, GetAvailableParsers,
+  GetWatcherState, SaveWatcherConfig, StartWatcher, StopWatcher
 } from '../wailsjs/go/main/App'
 import { isValidIP, maskToCidr, cidrToMask, isCidrInput } from './utils/netUtils'
 import { useTheme } from './utils/useTheme'
 import {
   Monitor, Tools, Setting,
   Moon, Sunny, Platform,
-  Download, View
+  Download, View,
+  VideoPlay, VideoPause
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, ElTable } from 'element-plus'
 
@@ -369,57 +392,129 @@ const isInfinite = ref(false)
 const isPinging = ref(false)
 const textareaRef = ref<any>(null)
 
-// Begin (Watcher)
-type ProtocolType = 'udp' | 'tcp'
-type ParserType = 'raw' | 'ascii' | 'mavlink' | 'json'
-
-interface Packet {
-  id: number
+interface UiPacket extends Omit<watcher.UDPPacket, 'convertValues' | 'payload' | 'timestamp'> {
   timestamp: Date
-  protocol: ProtocolType
-  size: number
   payload: Uint8Array
+  parsed_data: Record<string, any>
 }
 
-interface WatcherConfig {
-  protocol: ProtocolType
-  port: number
-  parser: ParserType
-}
-
+const availableParsers = ref<watcher.ParserMeta[]>([])
 const tableRef = ref<InstanceType<typeof ElTable> | null>(null)
-const isWatching = ref<boolean>(false)
 const autoScroll = ref<boolean>(true)
-const packets = ref<Packet[]>([])
-const selectedPacket = ref<Packet | null>(null)
-let mockTimer: number | null = null
+const packets = ref<UiPacket[]>([])
+const selectedPacket = ref<UiPacket | null>(null)
 
-const config = reactive<WatcherConfig>({
-  protocol: 'udp',
-  port: 8080,
-  parser: 'raw'
-})
+const config = ref<watcher.WatcherConfig>(new watcher.WatcherConfig)
+const isWatching = ref<boolean>(false)
 
-const toggleWatcher = () => {
-  if (isWatching.value) {
-    stopWatcher()
-  } else {
-    startWatcher()
+const base64ToUint8Array = (base64: string): Uint8Array => {
+  const binaryString = window.atob(base64)
+  const len = binaryString.length
+  const bytes = new Uint8Array(len)
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i)
+  }
+  return bytes
+}
+
+const syntaxHighlight = (json: Record<string, any> | undefined): string => {
+  if (!json) return ''
+  let str = JSON.stringify(json, null, 2)
+  str = str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  return str.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+    let cls = 'json-number'
+    if (/^"/.test(match)) {
+      if (/:$/.test(match)) {
+        cls = 'json-key'
+      } else {
+        cls = 'json-string'
+      }
+    } else if (/true|false/.test(match)) {
+      cls = 'json-boolean'
+    } else if (/null/.test(match)) {
+      cls = 'json-null'
+    }
+    return `<span class="${cls}">${match}</span>`
+  })
+}
+
+const MAX_PACKETS = 1000
+let cancelListener: (() => void) | null = null
+
+const startListeningLogs = () => {
+  cancelListener = EventsOn("packet_received", async (rawPacket: watcher.UDPPacket) => {
+    let finalPayload: Uint8Array
+
+    const rawPayload = rawPacket.payload as unknown
+
+    if (typeof rawPayload === 'string') {
+      finalPayload = base64ToUint8Array(rawPayload)
+    } else if (Array.isArray(rawPayload)) {
+      finalPayload = new Uint8Array(rawPayload)
+    } else {
+      finalPayload = new Uint8Array(0)
+    }
+
+    const packet: UiPacket = {
+      ...rawPacket,
+      timestamp: new Date(rawPacket.timestamp as unknown as string),
+      payload: finalPayload
+    }
+
+    packets.value.push(packet)
+
+    if (packets.value.length > MAX_PACKETS) {
+      packets.value.shift()
+    }
+
+    if (autoScroll.value) {
+      await nextTick()
+      scrollToBottom()
+    }
+  })
+}
+
+const stopListeningLogs = () => {
+  if (cancelListener) {
+    cancelListener()
+    cancelListener = null
   }
 }
 
-const startWatcher = () => {
-  isWatching.value = true
-  mockTimer = setInterval(() => {
-    addMockPacket()
-  }, 800)
+const initData = async () => {
+  try {
+    const [parsers, state] = await Promise.all([
+      GetAvailableParsers(),
+      GetWatcherState()
+    ])
+
+    availableParsers.value = parsers
+
+    config.value = state.config
+    isWatching.value = state.running
+
+    const parserExists = parsers.find(p => p.id === config.value.parser)
+    if (!parserExists && parsers.length > 0) {
+      config.value.parser = parsers[0].id
+    }
+  } catch (e) {
+    console.error(e)
+  }
 }
 
-const stopWatcher = () => {
-  isWatching.value = false
-  if (mockTimer !== null) {
-    clearInterval(mockTimer)
-    mockTimer = null
+watch(config, (newConfig) => {
+  SaveWatcherConfig(newConfig)
+}, { deep: true })
+
+const toggleWatcher = () => {
+  if (isWatching.value) {
+    stopListeningLogs()
+    isWatching.value = false
+    StopWatcher()
+  } else {
+    startListeningLogs()
+    isWatching.value = true
+    StartWatcher()
   }
 }
 
@@ -428,7 +523,7 @@ const clearLogs = () => {
   selectedPacket.value = null
 }
 
-const selectPacket = (row: Packet) => {
+const selectPacket = (row: UiPacket) => {
   selectedPacket.value = row
 }
 
@@ -436,67 +531,13 @@ const formatTime = (date: Date): string => {
   return date.toLocaleTimeString('en-US', { hour12: false }) + '.' + date.getMilliseconds().toString().padStart(3, '0')
 }
 
-const addMockPacket = async () => {
-  const size = Math.floor(Math.random() * 50) + 10
-  const payload = new Uint8Array(size)
-  window.crypto.getRandomValues(payload)
-
-  const packet: Packet = {
-    id: Date.now() + Math.random(),
-    timestamp: new Date(),
-    protocol: config.protocol,
-    size: size,
-    payload: payload
-  }
-
-  packets.value.push(packet)
-
-  if (packets.value.length > 1000) {
-    packets.value.shift()
-  }
-
-  if (autoScroll.value) {
-    await nextTick()
-    scrollToBottom()
-  }
-}
-
-const getPreview = (packet: Packet): string => {
+const getPreview = (packet: watcher.UDPPacket): string => {
   const slice = packet.payload.slice(0, 12)
   const hexString = Array.from(slice)
     .map(b => b.toString(16).padStart(2, '0').toUpperCase())
     .join(' ')
 
   return hexString + (packet.size > 12 ? '...' : '')
-}
-
-const parsePacket = (packet: Packet): string => {
-  if (config.parser === 'raw') {
-    return 'Raw bytes mode. See Hex Dump below.'
-  }
-
-  if (config.parser === 'ascii') {
-    let res = ''
-    packet.payload.forEach((b) => {
-      res += (b > 31 && b < 127) ? String.fromCharCode(b) : '.'
-    })
-    return res
-  }
-
-  if (config.parser === 'mavlink') {
-    const msgId = packet.payload[0] ?? 0
-    const seq = packet.payload[1] ?? 0
-    return `[Mock] MAVLink Frame: MSG_ID=${msgId} SEQ=${seq}`
-  }
-
-  if (config.parser === 'json') {
-    return JSON.stringify({
-      mock_key: "value",
-      data: Array.from(packet.payload.slice(0, 3))
-    }, null, 2)
-  }
-
-  return 'Unknown parser'
 }
 
 const toHexDump = (buffer: Uint8Array): string => {
@@ -510,14 +551,12 @@ const toHexDump = (buffer: Uint8Array): string => {
 }
 
 onBeforeUnmount(() => {
-  if (mockTimer !== null) clearInterval(mockTimer)
+  stopListeningLogs()
 })
-// End (Watcher)
 
 const scrollToBottom = async () => {
   await nextTick()
 
-  // Start (Watcher)
   if (tableRef.value) {
     const scrollWrapper = tableRef.value.$el.querySelector('.el-scrollbar__wrap')
     if (scrollWrapper) {
@@ -525,7 +564,6 @@ const scrollToBottom = async () => {
       return
     }
   }
-  // End (Watcher)
 
   if (textareaRef.value) {
     const innerTextarea = textareaRef.value.textarea
@@ -573,6 +611,8 @@ onMounted(async () => {
     pingLogs.value += msg
     scrollToBottom()
   })
+
+  initData()
 
   appVersion.value = await GetAppVersion()
 
@@ -923,7 +963,6 @@ html.dark .console-output :deep(.el-textarea__inner) {
   }
 }
 
-/* Start (Watcher) */
 .watcher-view {
   height: 100%;
   display: flex;
@@ -1024,18 +1063,50 @@ html.dark .console-output :deep(.el-textarea__inner) {
 }
 
 .code-block {
+  text-align: left;
   background-color: var(--el-fill-color-lighter);
   border: 1px solid var(--el-border-color-lighter);
   color: var(--el-text-color-primary);
   padding: 12px;
   border-radius: 4px;
-  font-family: 'Consolas', 'Monaco', monospace;
+
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.5;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.json-view {
+  margin: 0;
+  white-space: pre;
+}
+
+.raw-text {
   white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 250px;
-  overflow-y: auto;
+}
+
+:deep(.json-key) {
+  color: var(--el-color-primary);
+  font-weight: bold;
+}
+
+:deep(.json-string) {
+  color: var(--el-color-success);
+}
+
+:deep(.json-number) {
+  color: var(--el-color-warning);
+}
+
+:deep(.json-boolean) {
+  color: var(--el-color-danger);
+  font-weight: bold;
+}
+
+:deep(.json-null) {
+  color: var(--el-text-color-secondary);
+  font-style: italic;
 }
 
 .hex-view {
@@ -1047,19 +1118,27 @@ html.dark .console-output :deep(.el-textarea__inner) {
   font-weight: 500;
 }
 
-.code-block::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.parser-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 20px;
 }
 
-.code-block::-webkit-scrollbar-thumb {
-  background-color: var(--el-border-color-darker);
-  border-radius: 3px;
+.option-name {
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.code-block::-webkit-scrollbar-track {
-  background-color: var(--el-fill-color-lighter);
-}
+.option-desc {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
-/* End (Watcher) */
+  max-width: 150px;
+  text-align: right;
+}
 </style>

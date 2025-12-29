@@ -6,6 +6,7 @@ import (
 	"macbox/internal/tools"
 
 	"macbox/pkg/network"
+	"macbox/pkg/watcher"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -16,6 +17,7 @@ type App struct {
 	version        string
 	networkService *services.NetworkService
 	updateService  *services.UpdateService
+	watcherService *services.WatcherService
 
 	pingTool *tools.PingTool
 }
@@ -26,6 +28,7 @@ func NewApp(v string) *App {
 		version:        v,
 		networkService: services.NewNetworkService(),
 		updateService:  services.NewUpdateService(v),
+		watcherService: services.NewWatcherService(),
 		pingTool:       tools.NewPingTool(),
 	}
 }
@@ -39,6 +42,7 @@ func (a *App) GetAppVersion() string {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	a.updateService.SetContext(ctx)
+	a.watcherService.SetContext(ctx)
 
 	go a.networkService.StartLiveLoop(ctx)
 }
@@ -57,6 +61,10 @@ func (a *App) UpdateInterface(data network.UpdatePayload) string {
 
 func (a *App) RegisterModels() network.HardwareInterface {
 	return network.HardwareInterface{}
+}
+
+func (a *App) RegisterUDPPacket() watcher.UDPPacket {
+	return watcher.UDPPacket{}
 }
 
 func (a *App) CheckUpdate() *services.ReleaseInfo {
@@ -80,4 +88,24 @@ func (a *App) StartPing(ip string, count int) string {
 
 func (a *App) StopPing() {
 	a.pingTool.Stop()
+}
+
+func (a *App) GetAvailableParsers() []watcher.ParserMeta {
+	return a.watcherService.GetAvailableParsers()
+}
+
+func (a *App) GetWatcherState() watcher.WatcherState {
+	return a.watcherService.GetState()
+}
+
+func (a *App) SaveWatcherConfig(cfg watcher.WatcherConfig) {
+	a.watcherService.SaveConfig(cfg)
+}
+
+func (a *App) StartWatcher() {
+	a.watcherService.Start()
+}
+
+func (a *App) StopWatcher() {
+	a.watcherService.Stop()
 }

@@ -18,6 +18,14 @@ export function GetAppVersion() {
   return window['go']['main']['App']['GetAppVersion']();
 }
 
+export function GetAvailableParsers() {
+  return window['go']['main']['App']['GetAvailableParsers']();
+}
+
+export function GetWatcherState() {
+  return window['go']['main']['App']['GetWatcherState']();
+}
+
 export function InstallUpdate(arg1) {
   return window['go']['main']['App']['InstallUpdate'](arg1);
 }
@@ -26,12 +34,28 @@ export function RegisterModels() {
   return window['go']['main']['App']['RegisterModels']();
 }
 
+export function RegisterUDPPacket() {
+  return window['go']['main']['App']['RegisterUDPPacket']();
+}
+
+export function SaveWatcherConfig(arg1) {
+  return window['go']['main']['App']['SaveWatcherConfig'](arg1);
+}
+
 export function StartPing(arg1, arg2) {
   return window['go']['main']['App']['StartPing'](arg1, arg2);
 }
 
+export function StartWatcher() {
+  return window['go']['main']['App']['StartWatcher']();
+}
+
 export function StopPing() {
   return window['go']['main']['App']['StopPing']();
+}
+
+export function StopWatcher() {
+  return window['go']['main']['App']['StopWatcher']();
 }
 
 export function UpdateInterface(arg1) {

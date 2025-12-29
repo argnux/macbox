@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/bluenviron/gomavlib/v3 v3.3.0
 	github.com/minio/selfupdate v0.6.0
 	github.com/prometheus-community/pro-bing v0.7.0
 	github.com/wailsapp/wails/v2 v2.11.0
