@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"io"
 	"macbox/internal/parsers"
 	"macbox/pkg/watcher"
 	"net"
@@ -86,16 +87,38 @@ func (w *WatcherService) SaveConfig(cfg watcher.WatcherConfig) {
 	w.state.Config = cfg
 }
 
-func udpReceiver(conn *net.UDPConn, dataChan chan watcher.UDPPacket, errChan chan error) {
-	buffer := make([]byte, 1024)
+func (w *WatcherService) startUDP(ctx context.Context, port int, dataChan chan<- watcher.UDPPacket, errChan chan<- error) {
+	addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		errChan <- err
+		return
+	}
+	conn, err := net.ListenUDP("udp", addr)
+	if err != nil {
+		errChan <- err
+		return
+	}
+
+	go func() {
+		<-ctx.Done()
+		conn.Close()
+	}()
+
+	buffer := make([]byte, 2048)
 	for {
 		n, from, err := conn.ReadFromUDP(buffer)
 		if err != nil {
-			errChan <- err
-			return
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				errChan <- err
+				return
+			}
 		}
 
-		toSend := append([]byte(nil), buffer[:n]...)
+		toSend := make([]byte, n)
+		copy(toSend, buffer[:n])
 
 		packet := watcher.UDPPacket{
 			Timestamp: time.Now(),
@@ -104,53 +127,130 @@ func udpReceiver(conn *net.UDPConn, dataChan chan watcher.UDPPacket, errChan cha
 			FromIP:    from.String(),
 		}
 
-		dataChan <- packet
+		select {
+		case dataChan <- packet:
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (w *WatcherService) startTCP(ctx context.Context, port int, dataChan chan<- watcher.UDPPacket, errChan chan<- error) {
+	addr := fmt.Sprintf(":%d", port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		errChan <- err
+		return
+	}
+
+	go func() {
+		<-ctx.Done()
+		listener.Close()
+	}()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				errChan <- err
+				return
+			}
+		}
+
+		go w.handleTCPConnection(ctx, conn, dataChan)
+	}
+}
+
+func (w *WatcherService) handleTCPConnection(ctx context.Context, conn net.Conn, dataChan chan<- watcher.UDPPacket) {
+	defer conn.Close()
+	remoteAddr := conn.RemoteAddr().String()
+	buffer := make([]byte, 4096)
+
+	for {
+		n, err := conn.Read(buffer)
+		if err != nil {
+			if err != io.EOF {
+				fmt.Printf("TCP read error from %s: %v\n", remoteAddr, err)
+			}
+			return
+		}
+
+		toSend := make([]byte, n)
+		copy(toSend, buffer[:n])
+
+		packet := watcher.UDPPacket{
+			Timestamp: time.Now(),
+			Size:      n,
+			Payload:   toSend,
+			FromIP:    remoteAddr,
+		}
+
+		select {
+		case dataChan <- packet:
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
 func (w *WatcherService) Start() {
 	ctx, cancel := context.WithCancel(w.ctx)
-	w.SetParser(w.state.Config.Parser)
 
 	w.mu.Lock()
 	w.cancelFunc = cancel
 	w.state.IsRunning = true
-	parser := w.currentParser
+	if p, ok := w.parsersMap[w.state.Config.Parser]; ok {
+		w.currentParser = p
+	}
+	currentParser := w.currentParser
+	protocol := w.state.Config.Protocol
+	port := w.state.Config.Port
 	w.mu.Unlock()
+
+	dataChan := make(chan watcher.UDPPacket, 100)
+	errChan := make(chan error)
+
+	if protocol == "tcp" {
+		go w.startTCP(ctx, port, dataChan, errChan)
+	} else {
+		go w.startUDP(ctx, port, dataChan, errChan)
+	}
 
 	go func() {
 		var id int64 = 0
 
-		addr, err := net.ResolveUDPAddr("udp", fmt.Sprintf(":%d", w.state.Config.Port))
-		if err != nil {
-			fmt.Println(err)
-		}
-		conn, err := net.ListenUDP("udp", addr)
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer conn.Close()
-
-		dataChan := make(chan watcher.UDPPacket)
-		errChan := make(chan error)
-
-		go udpReceiver(conn, dataChan, errChan)
+		defer func() {
+			w.mu.Lock()
+			w.state.IsRunning = false
+			w.mu.Unlock()
+		}()
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
+
 			case packet := <-dataChan:
 				packet.ID = id
-				packet.Protocol = w.state.Config.Protocol
-				packet.Parser = w.state.Config.Parser
-				packet.Port = w.state.Config.Port
-				packet.ParsedData, _ = parser.Parse(packet.Payload)
+				packet.Protocol = protocol
+				packet.Parser = currentParser.ID()
+				packet.Port = port
+
+				// TODO: parse chunks instead of full packets
+				parsedData, _ := currentParser.Parse(packet.Payload)
+				packet.ParsedData = parsedData
 
 				runtime.EventsEmit(w.ctx, "packet_received", packet)
 				id++
+
 			case err := <-errChan:
-				fmt.Printf("Error in receiver: %v\n", err)
+				fmt.Printf("Listener Error: %v\n", err)
+				w.Stop()
+
+				runtime.EventsEmit(w.ctx, "watcher_error", err.Error())
 				return
 			}
 		}
@@ -161,6 +261,8 @@ func (w *WatcherService) Stop() {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	w.cancelFunc()
+	if w.cancelFunc != nil {
+		w.cancelFunc()
+	}
 	w.state.IsRunning = false
 }
