@@ -34,6 +34,7 @@ func NewWatcherService() *WatcherService {
 		parsersMap: make(map[string]watcher.ProtocolParser),
 	}
 	service.registerParser(&parsers.RawParser{})
+	service.registerParser(&parsers.AsciiParser{})
 	service.registerParser(&parsers.MavlinkParser{})
 
 	service.currentParser = service.parsersList[0]
