@@ -93,6 +93,7 @@ actor NetworkService {
             return []
         }
 
+        let activeDevices = activeInterfaceNames()
         var hardwareByDevice: [String: HardwareInterface] = [:]
 
         for service in currentLocationServices(preferences: preferences) {
@@ -115,7 +116,7 @@ actor NetworkService {
                 name: hardwareName(for: interface, fallback: deviceID),
                 device: deviceID,
                 mac: SCNetworkInterfaceGetHardwareAddressString(interface) as String? ?? "",
-                isActive: isInterfaceActive(deviceID),
+                isActive: activeDevices.contains(deviceID),
                 logicInterfaces: []
             )
 
@@ -241,24 +242,25 @@ actor NetworkService {
         }
     }
 
-    private func isInterfaceActive(_ device: String) -> Bool {
+    private func activeInterfaceNames() -> Set<String> {
         var addresses: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&addresses) == 0, let firstAddress = addresses else {
-            return false
+            return []
         }
         defer { freeifaddrs(firstAddress) }
 
+        var devices = Set<String>()
         var cursor: UnsafeMutablePointer<ifaddrs>? = firstAddress
         while let pointer = cursor {
             let address = pointer.pointee
-            if String(cString: address.ifa_name) == device {
-                let flags = Int32(address.ifa_flags)
-                return (flags & IFF_UP) != 0 && (flags & IFF_RUNNING) != 0
+            let flags = Int32(address.ifa_flags)
+            if (flags & IFF_UP) != 0, (flags & IFF_RUNNING) != 0 {
+                devices.insert(String(cString: address.ifa_name))
             }
             cursor = address.ifa_next
         }
 
-        return false
+        return devices
     }
 
     private func updatePreferences(_ changes: (SCPreferences) throws -> Void) throws {

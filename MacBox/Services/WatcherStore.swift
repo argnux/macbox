@@ -15,7 +15,11 @@ final class WatcherStore: ObservableObject {
     private var listener: NWListener?
     private var connections: [ObjectIdentifier: NWConnection] = [:]
     private var nextPacketID: Int64 = 0
+    private var pendingPackets: [CapturedPacket] = []
+    private var pendingFlushWorkItem: DispatchWorkItem?
     private let maxPackets = 1_000
+    private let packetBatchInterval: TimeInterval = 0.08
+    private let packetBatchLimit = 40
 
     var selectedPacket: CapturedPacket? {
         guard let selectedPacketID else { return nil }
@@ -90,13 +94,22 @@ final class WatcherStore: ObservableObject {
         listener = nil
         connections.values.forEach { $0.cancel() }
         connections.removeAll()
+        queue.async { [weak self] in
+            self?.flushPendingPackets()
+        }
         isRunning = false
     }
 
     func clearPackets() {
         packets.removeAll()
         selectedPacketID = nil
-        nextPacketID = 0
+        queue.async { [weak self] in
+            guard let self else { return }
+            self.pendingFlushWorkItem?.cancel()
+            self.pendingFlushWorkItem = nil
+            self.pendingPackets.removeAll()
+            self.nextPacketID = 0
+        }
     }
 
     private func receiveDatagram(
@@ -153,22 +166,54 @@ final class WatcherStore: ObservableObject {
     ) {
         let parsedOutput = parser.parse(data)
         let remote = endpoint.displayName
+        let timestamp = Date()
+        let packet = CapturedPacket(
+            id: nextPacketID,
+            timestamp: timestamp,
+            formattedTime: PacketDisplayFormatter.formattedTime(timestamp),
+            protocolName: protocolType.rawValue,
+            parserID: parserID,
+            size: data.count,
+            payload: data,
+            preview: PacketDisplayFormatter.preview(data),
+            hexDump: PacketDisplayFormatter.hexDump(data),
+            parsedOutput: parsedOutput,
+            fromIP: remote,
+            port: port
+        )
 
-        DispatchQueue.main.async {
-            let packet = CapturedPacket(
-                id: self.nextPacketID,
-                timestamp: Date(),
-                protocolName: protocolType.rawValue,
-                parserID: parserID,
-                size: data.count,
-                payload: data,
-                parsedOutput: parsedOutput,
-                fromIP: remote,
-                port: port
-            )
+        nextPacketID += 1
+        pendingPackets.append(packet)
 
-            self.nextPacketID += 1
-            self.packets.append(packet)
+        if pendingPackets.count >= packetBatchLimit {
+            flushPendingPackets()
+        } else {
+            schedulePacketFlush()
+        }
+    }
+
+    private func schedulePacketFlush() {
+        guard pendingFlushWorkItem == nil else { return }
+
+        let workItem = DispatchWorkItem { [weak self] in
+            self?.flushPendingPackets()
+        }
+        pendingFlushWorkItem = workItem
+        queue.asyncAfter(deadline: .now() + packetBatchInterval, execute: workItem)
+    }
+
+    private func flushPendingPackets() {
+        pendingFlushWorkItem?.cancel()
+        pendingFlushWorkItem = nil
+
+        guard !pendingPackets.isEmpty else { return }
+
+        let packetsToAppend = pendingPackets
+        pendingPackets.removeAll(keepingCapacity: true)
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.packets.append(contentsOf: packetsToAppend)
 
             if self.packets.count > self.maxPackets {
                 self.packets.removeFirst(self.packets.count - self.maxPackets)
@@ -179,6 +224,32 @@ final class WatcherStore: ObservableObject {
     private func removeConnection(_ connection: NWConnection) {
         DispatchQueue.main.async {
             self.connections.removeValue(forKey: ObjectIdentifier(connection))
+        }
+    }
+}
+
+private enum PacketDisplayFormatter {
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss.SSS"
+        return formatter
+    }()
+
+    static func formattedTime(_ date: Date) -> String {
+        timeFormatter.string(from: date)
+    }
+
+    static func preview(_ data: Data) -> String {
+        let bytes = data.prefix(12).map { String(format: "%02X", $0) }.joined(separator: " ")
+        return data.count > 12 ? "\(bytes)..." : bytes
+    }
+
+    static func hexDump(_ data: Data) -> String {
+        data.enumerated().reduce(into: "") { result, pair in
+            if pair.offset > 0, pair.offset.isMultiple(of: 16) {
+                result += "\n"
+            }
+            result += String(format: "%02X ", pair.element)
         }
     }
 }

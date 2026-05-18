@@ -10,20 +10,21 @@ struct NewServiceView: View {
     @State private var isSaving = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("New Service")
-                .font(.title3.weight(.semibold))
+        VStack(alignment: .leading, spacing: AppUI.sectionSpacing) {
+            SheetHeader(title: "New Service", subtitle: hardware.name)
 
-            Text(hardware.name)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            TextField("Service Name", text: $name)
+            AppPanel {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Service Name")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    TextField("Service Name", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
 
             if let errorMessage {
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundStyle(.red)
+                StatusBadge(errorMessage, systemImage: "exclamationmark.triangle.fill", color: .red)
             }
 
             HStack {
@@ -32,6 +33,7 @@ struct NewServiceView: View {
                     dismiss()
                 }
                 .controlSize(.large)
+                .keyboardShortcut(.cancelAction)
 
                 Button("Create") {
                     Task { await create() }
@@ -39,10 +41,11 @@ struct NewServiceView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .disabled(isSaving)
+                .keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)
-        .frame(width: 380)
+        .frame(width: 420)
     }
 
     private func create() async {

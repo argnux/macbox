@@ -4,11 +4,14 @@ struct WatcherView: View {
     @ObservedObject var store: WatcherStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Packet Watcher")
-                .font(.title2.weight(.semibold))
+        VStack(alignment: .leading, spacing: AppUI.sectionSpacing) {
+            PageHeader("Watcher", subtitle: "Listen for TCP or UDP packets and inspect parsed payloads") {
+                StatusBadge(packetSummary, systemImage: "tray.full", color: .secondary)
+            }
 
-            controls
+            AppPanel {
+                controls
+            }
 
             HSplitView {
                 PacketListView(store: store)
@@ -20,10 +23,10 @@ struct WatcherView: View {
             .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.secondary.opacity(0.16))
+                    .stroke(Color(nsColor: .separatorColor).opacity(0.75))
             )
         }
-        .padding(20)
+        .padding(AppUI.pagePadding)
         .alert("Watcher Error", isPresented: errorBinding) {
             Button("OK") {
                 store.errorMessage = nil
@@ -34,7 +37,21 @@ struct WatcherView: View {
     }
 
     private var controls: some View {
-        HStack(spacing: 12) {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: AppUI.controlSpacing) {
+                filterControls
+                actionControls
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                filterControls
+                actionControls
+            }
+        }
+    }
+
+    private var filterControls: some View {
+        HStack(spacing: AppUI.controlSpacing) {
             Picker("Protocol", selection: $store.config.protocolType) {
                 ForEach(WatchProtocol.allCases) { item in
                     Text(item.title).tag(item)
@@ -55,7 +72,11 @@ struct WatcherView: View {
             }
             .frame(width: 220)
             .disabled(store.isRunning)
+        }
+    }
 
+    private var actionControls: some View {
+        HStack(spacing: AppUI.controlSpacing) {
             Button {
                 if store.isRunning {
                     store.stop()
@@ -64,27 +85,31 @@ struct WatcherView: View {
                 }
             } label: {
                 Label(store.isRunning ? "Stop" : "Start Listening", systemImage: store.isRunning ? "pause.fill" : "play.fill")
+                    .toolbarButtonFrame()
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
             .tint(store.isRunning ? .red : .green)
 
             Button {
                 store.clearPackets()
             } label: {
                 Label("Clear", systemImage: "trash")
+                    .toolbarButtonFrame()
             }
+            .controlSize(.large)
             .disabled(store.packets.isEmpty)
 
             Spacer()
 
             Toggle("Auto-scroll", isOn: $store.autoScroll)
+            StatusBadge(store.isRunning ? "Listening" : "Stopped", systemImage: store.isRunning ? "dot.radiowaves.left.and.right" : "pause.circle", color: store.isRunning ? .green : .secondary)
         }
-        .padding(12)
-        .background(.background, in: RoundedRectangle(cornerRadius: 8))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.secondary.opacity(0.14))
-        )
+    }
+
+    private var packetSummary: String {
+        let count = store.packets.count
+        return count == 1 ? "1 packet" : "\(count) packets"
     }
 
     private var errorBinding: Binding<Bool> {
@@ -108,26 +133,34 @@ private struct PacketListView: View {
 
             Divider()
 
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(store.packets) { packet in
-                            PacketRow(
-                                packet: packet,
-                                isSelected: store.selectedPacketID == packet.id
-                            )
-                            .id(packet.id)
-                            .onTapGesture {
-                                store.selectedPacketID = packet.id
-                            }
+            if store.packets.isEmpty {
+                EmptyStateView(
+                    systemImage: "tray",
+                    title: "No packets captured",
+                    message: store.isRunning ? "Waiting for packets on the selected port." : "Start listening to capture packets."
+                )
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(store.packets) { packet in
+                                PacketRow(
+                                    packet: packet,
+                                    isSelected: store.selectedPacketID == packet.id
+                                )
+                                .id(packet.id)
+                                .onTapGesture {
+                                    store.selectedPacketID = packet.id
+                                }
 
-                            Divider()
+                                Divider()
+                            }
                         }
                     }
-                }
-                .onReceive(store.$packets) { packets in
-                    guard store.autoScroll, let lastID = packets.last?.id else { return }
-                    proxy.scrollTo(lastID, anchor: .bottom)
+                    .onReceive(store.$packets) { packets in
+                        guard store.autoScroll, let lastID = packets.last?.id else { return }
+                        proxy.scrollTo(lastID, anchor: .bottom)
+                    }
                 }
             }
         }
@@ -165,7 +198,7 @@ private struct PacketRow: View {
         }
         .font(.system(.caption, design: .monospaced))
         .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.vertical, 8)
         .background(isSelected ? Color.accentColor.opacity(0.16) : Color.clear)
         .contentShape(Rectangle())
     }
@@ -244,7 +277,11 @@ private struct ParsedRows: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+        .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: AppUI.cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppUI.cornerRadius)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.45))
+        )
     }
 }
 
@@ -278,7 +315,11 @@ private struct CodeBlock: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(12)
         }
-        .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+        .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: AppUI.cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppUI.cornerRadius)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.45))
+        )
     }
 }
 
@@ -309,27 +350,5 @@ private extension NumberFormatter {
         formatter.minimum = NSNumber(value: 1)
         formatter.maximum = NSNumber(value: 65_535)
         return formatter
-    }
-}
-
-private extension CapturedPacket {
-    var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm:ss.SSS"
-        return formatter.string(from: timestamp)
-    }
-
-    var preview: String {
-        let bytes = payload.prefix(12).map { String(format: "%02X", $0) }.joined(separator: " ")
-        return size > 12 ? "\(bytes)..." : bytes
-    }
-
-    var hexDump: String {
-        payload.enumerated().reduce(into: "") { result, pair in
-            if pair.offset > 0, pair.offset.isMultiple(of: 16) {
-                result += "\n"
-            }
-            result += String(format: "%02X ", pair.element)
-        }
     }
 }

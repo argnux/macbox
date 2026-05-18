@@ -8,44 +8,22 @@ struct NetworkView: View {
     @State private var alert: NetworkAlert?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            header
-
-            if store.interfaces.isEmpty, store.isRefreshing {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if store.interfaces.isEmpty {
-                VStack(spacing: 10) {
-                    Image(systemName: "network.slash")
-                        .font(.largeTitle)
-                    Text("No network interfaces found")
-                        .font(.headline)
-                    Button {
-                        Task { await store.refresh() }
-                    } label: {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                    .controlSize(.large)
+        VStack(alignment: .leading, spacing: AppUI.sectionSpacing) {
+            PageHeader("Interfaces", subtitle: interfaceSummary) {
+                Button {
+                    Task { await store.refresh() }
+                } label: {
+                    Label(store.isRefreshing ? "Refreshing" : "Refresh", systemImage: "arrow.clockwise")
+                        .toolbarButtonFrame()
                 }
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(store.interfaces) { hardware in
-                            HardwareInterfacePanel(
-                                hardware: hardware,
-                                onAdd: { addTarget = hardware },
-                                onEdit: { editingInterface = $0 },
-                                onDelete: { alert = .delete($0) }
-                            )
-                        }
-                    }
-                    .padding(.bottom, 24)
-                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .disabled(store.isRefreshing)
             }
+
+            content
         }
-        .padding(20)
+        .padding(AppUI.pagePadding)
         .sheet(item: $editingInterface) { logicInterface in
             InterfaceEditorView(interface: logicInterface) { payload in
                 await store.updateInterface(payload)
@@ -77,27 +55,47 @@ struct NetworkView: View {
         }
     }
 
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Network Interfaces")
-                    .font(.title2.weight(.semibold))
-                Text("\(store.interfaces.count) hardware ports")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+    private var interfaceSummary: String {
+        let count = store.interfaces.count
+        return count == 1 ? "1 hardware port" : "\(count) hardware ports"
+    }
 
-            Spacer()
+    @ViewBuilder
+    private var content: some View {
+        if store.interfaces.isEmpty, store.isRefreshing {
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if store.interfaces.isEmpty {
+            VStack(spacing: 18) {
+                EmptyStateView(
+                    systemImage: "network.slash",
+                    title: "No network interfaces found",
+                    message: "Connect a network adapter or refresh after changing macOS network settings."
+                )
 
-            Button {
-                Task { await store.refresh() }
-            } label: {
-                Label("Refresh", systemImage: "arrow.clockwise")
-                    .frame(minHeight: 34)
+                Button {
+                    Task { await store.refresh() }
+                } label: {
+                    Label("Refresh", systemImage: "arrow.clockwise")
+                        .toolbarButtonFrame()
+                }
+                .controlSize(.large)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .disabled(store.isRefreshing)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                LazyVStack(spacing: 14) {
+                    ForEach(store.interfaces) { hardware in
+                        HardwareInterfacePanel(
+                            hardware: hardware,
+                            onAdd: { addTarget = hardware },
+                            onEdit: { editingInterface = $0 },
+                            onDelete: { alert = .delete($0) }
+                        )
+                    }
+                }
+                .padding(.bottom, 24)
+            }
         }
     }
 }
@@ -123,71 +121,66 @@ private struct HardwareInterfacePanel: View {
     @State private var isExpanded = true
 
     var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Services")
-                        .font(.headline)
+        AppPanel {
+            DisclosureGroup(isExpanded: $isExpanded) {
+                VStack(alignment: .leading, spacing: 12) {
+                    SectionHeader(
+                        "Services",
+                        subtitle: serviceSummary
+                    ) {
+                        Button(action: onAdd) {
+                            Label("New Service", systemImage: "plus")
+                                .toolbarButtonFrame()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                    }
+
+                    if hardware.logicInterfaces.isEmpty {
+                        EmptyStateView(
+                            systemImage: "network.slash",
+                            title: "No services",
+                            message: nil
+                        )
+                        .frame(minHeight: 120)
+                    } else {
+                        LogicInterfaceGrid(
+                            logicInterfaces: hardware.logicInterfaces,
+                            onEdit: onEdit,
+                            onDelete: onDelete
+                        )
+                    }
+                }
+                .padding(.top, 12)
+            } label: {
+                HStack(spacing: 14) {
+                    StatusDot(isActive: hardware.isActive)
+                        .help(hardware.isActive ? "Active (Link Up)" : "Inactive (Link Down)")
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(hardware.name)
+                            .font(.headline)
+                        Text(hardware.device)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
                     Spacer()
-                    Button(action: onAdd) {
-                        Label("New Service", systemImage: "plus")
-                            .frame(minHeight: 32)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                }
 
-                if hardware.logicInterfaces.isEmpty {
-                    VStack(spacing: 8) {
-                        Image(systemName: "network.slash")
-                            .font(.title2)
-                        Text("No Services")
-                            .font(.callout)
-                    }
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 18)
-                } else {
-                    LogicInterfaceGrid(
-                        logicInterfaces: hardware.logicInterfaces,
-                        onEdit: onEdit,
-                        onDelete: onDelete
-                    )
-                }
-            }
-            .padding(.top, 12)
-        } label: {
-            HStack(spacing: 14) {
-                StatusDot(isActive: hardware.isActive)
-                    .help(hardware.isActive ? "Active (Link Up)" : "Inactive (Link Down)")
+                    StatusBadge(hardware.isActive ? "Link up" : "Link down", color: hardware.isActive ? .green : .secondary)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(hardware.name)
-                        .font(.headline)
-                    Text(hardware.device)
-                        .font(.caption)
+                    Text(hardware.mac.isEmpty ? "Unknown MAC" : hardware.mac)
+                        .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                Text(hardware.mac.isEmpty ? "Unknown MAC" : hardware.mac)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                .contentShape(Rectangle())
             }
-            .contentShape(Rectangle())
         }
-        .padding(16)
-        .background(panelBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color(nsColor: .separatorColor).opacity(0.72), lineWidth: 1.25)
-        )
-        .shadow(color: Color.black.opacity(0.05), radius: 4, y: 1)
     }
 
-    private var panelBackground: some ShapeStyle {
-        Color(nsColor: .controlBackgroundColor)
+    private var serviceSummary: String {
+        let count = hardware.logicInterfaces.count
+        return count == 1 ? "1 configured service" : "\(count) configured services"
     }
 }
 
@@ -197,58 +190,67 @@ private struct LogicInterfaceGrid: View {
     var onDelete: (LogicInterface) -> Void
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 11) {
-            GridRow {
-                HeaderCell("Name")
-                HeaderCell("Method")
-                HeaderCell("IP Address")
-                HeaderCell("Mask / CIDR")
-                HeaderCell("Gateway")
-                HeaderCell("Actions")
-            }
-
-            Divider()
-                .gridCellColumns(6)
-
-            ForEach(logicInterfaces) { logicInterface in
+        ScrollView(.horizontal) {
+            Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 11) {
                 GridRow {
-                    Text(logicInterface.name)
-                        .font(.system(.body, design: .default))
-                        .lineLimit(1)
-                    MethodBadge(method: logicInterface.method)
-                    MonospaceCell(logicInterface.ip)
-                    MonospaceCell(displayMask(logicInterface.mask))
-                    MonospaceCell(logicInterface.gateway)
-                    HStack(spacing: 8) {
-                        Button {
-                            onEdit(logicInterface)
-                        } label: {
-                            Image(systemName: "pencil")
-                                .frame(width: 26, height: 24)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.regular)
-                        .contentShape(Rectangle())
-                        .help("Edit")
-
-                        Button(role: .destructive) {
-                            onDelete(logicInterface)
-                        } label: {
-                            Image(systemName: "trash")
-                                .frame(width: 26, height: 24)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.regular)
-                        .contentShape(Rectangle())
-                        .help("Delete")
-                    }
+                    HeaderCell("Name")
+                    HeaderCell("Method")
+                    HeaderCell("IP Address")
+                    HeaderCell("Mask / CIDR")
+                    HeaderCell("Gateway")
+                    HeaderCell("Actions")
                 }
 
                 Divider()
                     .gridCellColumns(6)
+
+                ForEach(logicInterfaces) { logicInterface in
+                    GridRow {
+                        Text(logicInterface.name)
+                            .font(.system(.body, design: .default))
+                            .lineLimit(1)
+                            .frame(minWidth: 150, alignment: .leading)
+                        MethodBadge(method: logicInterface.method)
+                        MonospaceCell(logicInterface.ip)
+                        MonospaceCell(displayMask(logicInterface.mask))
+                        MonospaceCell(logicInterface.gateway)
+                        HStack(spacing: 8) {
+                            Button {
+                                onEdit(logicInterface)
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .iconButtonFrame()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+                            .contentShape(Rectangle())
+                            .help("Edit")
+
+                            Button(role: .destructive) {
+                                onDelete(logicInterface)
+                            } label: {
+                                Image(systemName: "trash")
+                                    .iconButtonFrame()
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.large)
+                            .contentShape(Rectangle())
+                            .help("Delete")
+                        }
+                    }
+
+                    Divider()
+                        .gridCellColumns(6)
+                }
             }
+            .padding(12)
+            .frame(minWidth: 760, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: AppUI.cornerRadius))
+        .overlay(
+            RoundedRectangle(cornerRadius: AppUI.cornerRadius)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.55))
+        )
     }
 
     private func displayMask(_ mask: String) -> String {
@@ -268,6 +270,7 @@ private struct HeaderCell: View {
         Text(title)
             .font(.caption.weight(.semibold))
             .foregroundStyle(.secondary)
+            .frame(minWidth: 110, alignment: .leading)
     }
 }
 
@@ -283,6 +286,7 @@ private struct MonospaceCell: View {
             .font(.system(.body, design: .monospaced))
             .lineLimit(1)
             .textSelection(.enabled)
+            .frame(minWidth: 130, alignment: .leading)
     }
 }
 

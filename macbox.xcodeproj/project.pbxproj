@@ -21,6 +21,7 @@
 		A00000000000000000000027 /* UpdateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* UpdateStore.swift */; };
 		A0000000000000000000003E /* LegacyBundleMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003F /* LegacyBundleMigrator.swift */; };
 		A0000000000000000000002B /* IPAddressValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002A /* IPAddressValidator.swift */; };
+		A00000000000000000000040 /* AppUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000041 /* AppUI.swift */; };
 		A0000000000000000000002D /* NetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002C /* NetworkView.swift */; };
 		A0000000000000000000002F /* InterfaceEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002E /* InterfaceEditorView.swift */; };
 		A00000000000000000000031 /* NewServiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000030 /* NewServiceView.swift */; };
@@ -46,6 +47,7 @@
 		A00000000000000000000026 /* UpdateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateStore.swift; sourceTree = "<group>"; };
 		A0000000000000000000003F /* LegacyBundleMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyBundleMigrator.swift; sourceTree = "<group>"; };
 		A0000000000000000000002A /* IPAddressValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPAddressValidator.swift; sourceTree = "<group>"; };
+		A00000000000000000000041 /* AppUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUI.swift; sourceTree = "<group>"; };
 		A0000000000000000000002C /* NetworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkView.swift; sourceTree = "<group>"; };
 		A0000000000000000000002E /* InterfaceEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceEditorView.swift; sourceTree = "<group>"; };
 		A00000000000000000000030 /* NewServiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewServiceView.swift; sourceTree = "<group>"; };
@@ -131,6 +133,7 @@
 		A0000000000000000000000D /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A00000000000000000000041 /* AppUI.swift */,
 				A0000000000000000000002C /* NetworkView.swift */,
 				A0000000000000000000002E /* InterfaceEditorView.swift */,
 				A00000000000000000000030 /* NewServiceView.swift */,
@@ -231,6 +234,7 @@
 				A00000000000000000000027 /* UpdateStore.swift in Sources */,
 				A0000000000000000000003E /* LegacyBundleMigrator.swift in Sources */,
 				A0000000000000000000002B /* IPAddressValidator.swift in Sources */,
+				A00000000000000000000040 /* AppUI.swift in Sources */,
 				A0000000000000000000002D /* NetworkView.swift in Sources */,
 				A0000000000000000000002F /* InterfaceEditorView.swift in Sources */,
 				A00000000000000000000031 /* NewServiceView.swift in Sources */,
@@ -364,7 +368,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 211;
+				CURRENT_PROJECT_VERSION = 220;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				EXECUTABLE_NAME = macbox;
@@ -375,7 +379,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.argnux.macbox;
 				PRODUCT_NAME = MacBox;
 				SDKROOT = macosx;
@@ -393,7 +397,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 211;
+				CURRENT_PROJECT_VERSION = 220;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
 				EXECUTABLE_NAME = macbox;
@@ -404,7 +408,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 2.1.1;
+				MARKETING_VERSION = 2.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.argnux.macbox;
 				PRODUCT_NAME = MacBox;
 				SDKROOT = macosx;

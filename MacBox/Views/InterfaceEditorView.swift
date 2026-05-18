@@ -24,9 +24,8 @@ struct InterfaceEditorView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("Edit Service")
-                .font(.title3.weight(.semibold))
+        VStack(alignment: .leading, spacing: AppUI.sectionSpacing) {
+            SheetHeader(title: "Edit Service", subtitle: interface.device)
 
             Form {
                 TextField("Name", text: $name)
@@ -47,11 +46,10 @@ struct InterfaceEditorView: View {
                 TextField("Gateway", text: $gateway)
                     .disabled(method == .dhcp)
             }
+            .formStyle(.grouped)
 
             if let errorMessage {
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundStyle(.red)
+                StatusBadge(errorMessage, systemImage: "exclamationmark.triangle.fill", color: .red)
             }
 
             HStack {
@@ -60,6 +58,7 @@ struct InterfaceEditorView: View {
                     dismiss()
                 }
                 .controlSize(.large)
+                .keyboardShortcut(.cancelAction)
 
                 Button("Save") {
                     Task { await save() }
@@ -67,10 +66,11 @@ struct InterfaceEditorView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .disabled(isSaving)
+                .keyboardShortcut(.defaultAction)
             }
         }
         .padding(24)
-        .frame(width: 440)
+        .frame(width: 470)
     }
 
     private func save() async {

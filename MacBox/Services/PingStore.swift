@@ -10,6 +10,10 @@ final class PingStore: ObservableObject {
 
     private var process: Process?
     private let pingPath = "/sbin/ping"
+    private let maxLogCharacters = 80_000
+    private var pendingLog = ""
+    private var logFlushTask: Task<Void, Never>?
+    private var stopRequested = false
 
     func start() {
         guard !isRunning, !target.isEmpty else { return }
@@ -22,6 +26,9 @@ final class PingStore: ObservableObject {
         process.standardOutput = pipe
         process.standardError = pipe
 
+        logFlushTask?.cancel()
+        pendingLog = ""
+        stopRequested = false
         logs = "> Pinging \(target)...\n"
         isRunning = true
         self.process = process
@@ -30,7 +37,7 @@ final class PingStore: ObservableObject {
             let data = handle.availableData
             guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
             Task { @MainActor in
-                self?.logs += text
+                self?.appendLog(text)
             }
         }
 
@@ -40,9 +47,11 @@ final class PingStore: ObservableObject {
                 guard let self else { return }
                 self.process = nil
                 self.isRunning = false
-                if !self.logs.hasSuffix("> Stopped by user.\n") {
-                    self.logs += "\n> Done."
+                self.flushLog()
+                if !self.stopRequested {
+                    self.appendLog("\n> Done.", immediate: true)
                 }
+                self.stopRequested = false
             }
         }
 
@@ -52,13 +61,51 @@ final class PingStore: ObservableObject {
             pipe.fileHandleForReading.readabilityHandler = nil
             self.process = nil
             isRunning = false
-            logs += "\nError: \(error.localizedDescription)"
+            appendLog("\nError: \(error.localizedDescription)", immediate: true)
         }
     }
 
     func stop() {
         guard let process else { return }
+        stopRequested = true
         process.terminate()
-        logs += "\n> Stopped by user.\n"
+        appendLog("\n> Stopped by user.\n", immediate: true)
+    }
+
+    func clearLogs() {
+        logFlushTask?.cancel()
+        logFlushTask = nil
+        pendingLog = ""
+        logs = ""
+    }
+
+    private func appendLog(_ text: String, immediate: Bool = false) {
+        pendingLog += text
+
+        if immediate {
+            flushLog()
+            return
+        }
+
+        guard logFlushTask == nil else { return }
+
+        logFlushTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 120_000_000)
+            self?.flushLog()
+        }
+    }
+
+    private func flushLog() {
+        logFlushTask?.cancel()
+        logFlushTask = nil
+
+        guard !pendingLog.isEmpty else { return }
+
+        logs += pendingLog
+        pendingLog = ""
+
+        if logs.count > maxLogCharacters {
+            logs = String(logs.suffix(maxLogCharacters))
+        }
     }
 }

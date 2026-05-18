@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum AppSection: String, CaseIterable, Identifiable {
@@ -76,6 +77,27 @@ struct ContentView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
+            HStack(spacing: 10) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 30, height: 30)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("MacBox")
+                        .font(.headline)
+                    Text("Network control")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+
+            Divider()
+
             List(selection: $selection) {
                 ForEach(AppSection.allCases) { section in
                     Label(section.title, systemImage: section.systemImage)
@@ -92,16 +114,18 @@ struct ContentView: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .controlSize(.large)
 
                 if let release = updateStore.availableRelease {
                     Button {
                         updateStore.openCompatibleAsset()
                     } label: {
                         Label("Update \(release.tagName)", systemImage: "arrow.down.circle")
-                            .frame(maxWidth: .infinity, minHeight: 30)
+                            .frame(maxWidth: .infinity)
+                            .toolbarButtonFrame()
                     }
                     .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
+                    .controlSize(.large)
                 }
 
                 Text("Version \(AppInfo.version)")

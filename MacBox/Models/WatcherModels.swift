@@ -26,10 +26,13 @@ struct WatcherConfig: Hashable {
 struct CapturedPacket: Identifiable, Hashable {
     var id: Int64
     var timestamp: Date
+    var formattedTime: String
     var protocolName: String
     var parserID: String
     var size: Int
     var payload: Data
+    var preview: String
+    var hexDump: String
     var parsedOutput: ParsedOutput
     var fromIP: String
     var port: Int
