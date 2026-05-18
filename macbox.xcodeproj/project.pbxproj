@@ -19,6 +19,7 @@
 		A00000000000000000000023 /* PacketParsers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000022 /* PacketParsers.swift */; };
 		A00000000000000000000025 /* WatcherStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000024 /* WatcherStore.swift */; };
 		A00000000000000000000027 /* UpdateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* UpdateStore.swift */; };
+		A0000000000000000000003E /* LegacyBundleMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000003F /* LegacyBundleMigrator.swift */; };
 		A0000000000000000000002B /* IPAddressValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002A /* IPAddressValidator.swift */; };
 		A0000000000000000000002D /* NetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002C /* NetworkView.swift */; };
 		A0000000000000000000002F /* InterfaceEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002E /* InterfaceEditorView.swift */; };
@@ -29,7 +30,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A00000000000000000000008 /* macbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000000000000000000008 /* MacBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MacBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0000000000000000000000F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A00000000000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A00000000000000000000012 /* MacBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacBoxApp.swift; sourceTree = "<group>"; };
@@ -43,6 +44,7 @@
 		A00000000000000000000022 /* PacketParsers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketParsers.swift; sourceTree = "<group>"; };
 		A00000000000000000000024 /* WatcherStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatcherStore.swift; sourceTree = "<group>"; };
 		A00000000000000000000026 /* UpdateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateStore.swift; sourceTree = "<group>"; };
+		A0000000000000000000003F /* LegacyBundleMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyBundleMigrator.swift; sourceTree = "<group>"; };
 		A0000000000000000000002A /* IPAddressValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPAddressValidator.swift; sourceTree = "<group>"; };
 		A0000000000000000000002C /* NetworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkView.swift; sourceTree = "<group>"; };
 		A0000000000000000000002E /* InterfaceEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceEditorView.swift; sourceTree = "<group>"; };
@@ -74,7 +76,7 @@
 		A00000000000000000000007 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A00000000000000000000008 /* macbox.app */,
+				A00000000000000000000008 /* MacBox.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -113,6 +115,7 @@
 				A00000000000000000000022 /* PacketParsers.swift */,
 				A00000000000000000000024 /* WatcherStore.swift */,
 				A00000000000000000000026 /* UpdateStore.swift */,
+				A0000000000000000000003F /* LegacyBundleMigrator.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -163,7 +166,7 @@
 			);
 			name = macbox;
 			productName = macbox;
-			productReference = A00000000000000000000008 /* macbox.app */;
+			productReference = A00000000000000000000008 /* MacBox.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -226,6 +229,7 @@
 				A00000000000000000000023 /* PacketParsers.swift in Sources */,
 				A00000000000000000000025 /* WatcherStore.swift in Sources */,
 				A00000000000000000000027 /* UpdateStore.swift in Sources */,
+				A0000000000000000000003E /* LegacyBundleMigrator.swift in Sources */,
 				A0000000000000000000002B /* IPAddressValidator.swift in Sources */,
 				A0000000000000000000002D /* NetworkView.swift in Sources */,
 				A0000000000000000000002F /* InterfaceEditorView.swift in Sources */,
@@ -360,9 +364,10 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 210;
+				CURRENT_PROJECT_VERSION = 211;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = macbox;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MacBox/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -370,7 +375,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.argnux.macbox;
 				PRODUCT_NAME = MacBox;
 				SDKROOT = macosx;
@@ -388,9 +393,10 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 210;
+				CURRENT_PROJECT_VERSION = 211;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = macbox;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MacBox/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -398,7 +404,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 2.1.0;
+				MARKETING_VERSION = 2.1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.argnux.macbox;
 				PRODUCT_NAME = MacBox;
 				SDKROOT = macosx;

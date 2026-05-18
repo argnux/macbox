@@ -2,6 +2,12 @@ import SwiftUI
 
 @main
 struct MacBoxApp: App {
+    init() {
+        Task {
+            await LegacyBundleMigrator().repairIfNeeded()
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
