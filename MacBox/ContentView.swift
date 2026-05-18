@@ -118,14 +118,18 @@ struct ContentView: View {
 
                 if let release = updateStore.availableRelease {
                     Button {
-                        updateStore.openCompatibleAsset()
+                        Task { await updateStore.installAvailableUpdate() }
                     } label: {
-                        Label("Update \(release.tagName)", systemImage: "arrow.down.circle")
+                        Label(
+                            updateStore.isInstalling ? "Installing..." : "Install \(release.tagName)",
+                            systemImage: "arrow.down.circle"
+                        )
                             .frame(maxWidth: .infinity)
                             .toolbarButtonFrame()
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
+                    .disabled(updateStore.isInstalling)
                 }
 
                 Text("Version \(AppInfo.version)")

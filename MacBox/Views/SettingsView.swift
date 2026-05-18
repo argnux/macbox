@@ -25,7 +25,7 @@ struct SettingsView: View {
                                     .toolbarButtonFrame()
                             }
                             .controlSize(.large)
-                            .disabled(updateStore.isChecking)
+                            .disabled(updateStore.isChecking || updateStore.isInstalling)
                         }
 
                         updateState
@@ -44,6 +44,13 @@ struct SettingsView: View {
                 ProgressView()
                     .controlSize(.small)
                 Text("Checking for updates...")
+                    .foregroundStyle(.secondary)
+            }
+        } else if updateStore.isInstalling {
+            HStack(spacing: 10) {
+                ProgressView()
+                    .controlSize(.small)
+                Text(updateStore.lastCheckMessage ?? "Installing update...")
                     .foregroundStyle(.secondary)
             }
         } else if let release = updateStore.availableRelease {
@@ -66,12 +73,20 @@ struct SettingsView: View {
 
                 HStack(spacing: AppUI.controlSpacing) {
                     Button {
-                        updateStore.openCompatibleAsset()
+                        Task { await updateStore.installAvailableUpdate() }
                     } label: {
-                        Label("Download", systemImage: "arrow.down.circle")
+                        Label("Install Update", systemImage: "arrow.down.circle")
                             .toolbarButtonFrame()
                     }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+
+                    Button {
+                        updateStore.openCompatibleAsset()
+                    } label: {
+                        Label("Download Zip", systemImage: "safari")
+                            .toolbarButtonFrame()
+                    }
                     .controlSize(.large)
 
                     Button {

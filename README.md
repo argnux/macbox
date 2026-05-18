@@ -4,7 +4,7 @@ MacBox is a native SwiftUI macOS app for inspecting hardware network ports and m
 
 ## Version
 
-Current version: `2.2.0`.
+Current version: `2.2.1`.
 
 ## Features
 
@@ -12,7 +12,7 @@ Current version: `2.2.0`.
 - Create, rename, delete, DHCP, and manual IPv4 service configuration through native macOS network preferences
 - Ping tool backed by `/sbin/ping`
 - UDP/TCP packet watcher with raw hex, ASCII, and MAVLink v1/v2 parsing
-- GitHub release check for compatible macOS zip assets
+- GitHub release check and in-app install for compatible macOS zip assets
 
 ## Build
 
@@ -33,9 +33,11 @@ The app supports macOS only.
 
 ## Release
 
-Publish a GitHub release whose tag matches the app version, for example `v2.2.0`. The release workflow validates the tag against `MacBox/Info.plist`, builds a clean Apple Silicon `MacBox.app`, and uploads a zip named like `macbox_v2.2.0_arm64.zip`.
+Publish a GitHub release whose tag matches the app version, for example `v2.2.1`. The release workflow validates the tag against `MacBox/Info.plist`, builds a clean Apple Silicon `MacBox.app`, and uploads a zip named like `macbox_v2.2.1_arm64.zip`.
 
-The in-app updater checks the latest GitHub release and offers the compatible macOS zip asset when the release version is newer than the installed app.
+The in-app updater checks the latest GitHub release and installs the compatible macOS zip asset when the release version is newer than the installed app. The manual zip download remains available in Settings as a fallback.
+
+Version `2.1.1` only opens the update zip in a browser and cannot self-install Swift updates. Updating from `2.1.1` requires a one-time manual replacement of `MacBox.app`; newer versions install future updates in app.
 
 The app bundle is named `MacBox.app`, but the executable remains `Contents/MacOS/macbox` so v1.x Wails builds can install the Swift binary through their legacy updater.
 
