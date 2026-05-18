@@ -3,6 +3,12 @@ name: Build and Release macOS App
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and upload, for example v2.2.2
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -19,13 +25,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
       - name: Validate release tag
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
-          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${RELEASE_TAG#v}"
           app_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' MacBox/Info.plist)
           if [ "$tag_version" != "$app_version" ]; then
-            echo "Release tag ($GITHUB_REF_NAME) must match app version ($app_version)."
+            echo "Release tag ($RELEASE_TAG) must match app version ($app_version)."
             exit 1
           fi
 
@@ -46,15 +56,33 @@ jobs:
             build
 
       - name: Compress .app to .zip
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
           mkdir -p build/release
           ditto -c -k --sequesterRsrc --keepParent \
             "build/DerivedData/Build/Products/Release/MacBox.app" \
-            "build/release/macbox_${{ github.ref_name }}_arm64.zip"
+            "build/release/macbox_${RELEASE_TAG}_arm64.zip"
+
+      - name: Create DMG installer
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+        run: |
+          mkdir -p build/dmg-root
+          cp -R "build/DerivedData/Build/Products/Release/MacBox.app" "build/dmg-root/"
+          ln -s /Applications "build/dmg-root/Applications"
+          hdiutil create \
+            -volname "MacBox ${RELEASE_TAG}" \
+            -srcfolder "build/dmg-root" \
+            -ov \
+            -format UDZO \
+            "build/release/macbox_${RELEASE_TAG}_arm64.dmg"
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v3
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: build/release/macbox_${{ github.ref_name }}_arm64.zip
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          files: |
+            build/release/macbox_${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}_arm64.zip
+            build/release/macbox_${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}_arm64.dmg
           fail_on_unmatched_files: true

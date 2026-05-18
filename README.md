@@ -4,7 +4,7 @@ MacBox is a native SwiftUI macOS app for inspecting hardware network ports and m
 
 ## Version
 
-Current version: `2.2.1`.
+Current version: `2.2.2`.
 
 ## Features
 
@@ -33,11 +33,16 @@ The app supports macOS only.
 
 ## Release
 
-Publish a GitHub release whose tag matches the app version, for example `v2.2.1`. The release workflow validates the tag against `MacBox/Info.plist`, builds a clean Apple Silicon `MacBox.app`, and uploads a zip named like `macbox_v2.2.1_arm64.zip`.
+Publish a GitHub release whose tag matches the app version, for example `v2.2.2`. The release workflow validates the tag against `MacBox/Info.plist`, builds a clean Apple Silicon `MacBox.app`, and uploads:
+
+- `macbox_v2.2.2_arm64.zip` for the in-app updater
+- `macbox_v2.2.2_arm64.dmg` for native manual installation
 
 The in-app updater checks the latest GitHub release and installs the compatible macOS zip asset when the release version is newer than the installed app. The manual zip download remains available in Settings as a fallback.
 
-Version `2.1.1` only opens the update zip in a browser and cannot self-install Swift updates. Updating from `2.1.1` requires a one-time manual replacement of `MacBox.app`; newer versions install future updates in app.
+For manual installation, download the DMG, open it, drag `MacBox.app` to Applications, and replace the existing app.
+
+Version `2.1.1` only opens the update zip in a browser and cannot self-install Swift updates. Updating from `2.1.1` requires a one-time manual replacement of `MacBox.app`, preferably from the DMG; newer versions install future updates in app.
 
 The app bundle is named `MacBox.app`, but the executable remains `Contents/MacOS/macbox` so v1.x Wails builds can install the Swift binary through their legacy updater.
 
