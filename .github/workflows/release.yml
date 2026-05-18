@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-macos:
     name: Build for macOS (Apple Silicon)
@@ -14,34 +18,43 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Setup Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.24'
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '25'
-
-      - name: Install Wails
-        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+      - name: Validate release tag
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          app_version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' MacBox/Info.plist)
+          if [ "$tag_version" != "$app_version" ]; then
+            echo "Release tag ($GITHUB_REF_NAME) must match app version ($app_version)."
+            exit 1
+          fi
 
       - name: Build Application
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
         run: |
-          wails build -platform darwin/arm64 \
-          -ldflags "-X main.Version=${{ github.ref_name }}" \
-          -clean
+          xcodebuild \
+            -project macbox.xcodeproj \
+            -scheme macbox \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            clean \
+            build
 
       - name: Compress .app to .zip
         run: |
-          cd build/bin
-          ditto -c -k --sequesterRsrc --keepParent "macbox.app" "macbox_${{ github.ref_name }}_arm64.zip"
+          mkdir -p build/release
+          ditto -c -k --sequesterRsrc --keepParent \
+            "build/DerivedData/Build/Products/Release/MacBox.app" \
+            "build/release/macbox_${{ github.ref_name }}_arm64.zip"
 
       - name: Upload to Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: build/bin/macbox_${{ github.ref_name }}_arm64.zip
+          files: build/release/macbox_${{ github.ref_name }}_arm64.zip
+          fail_on_unmatched_files: true

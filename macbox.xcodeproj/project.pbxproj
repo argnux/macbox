@@ -1,0 +1,435 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000010 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000000F /* Assets.xcassets */; };
+		A00000000000000000000013 /* MacBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000012 /* MacBoxApp.swift */; };
+		A00000000000000000000015 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000014 /* ContentView.swift */; };
+		A00000000000000000000017 /* AppInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000016 /* AppInfo.swift */; };
+		A00000000000000000000019 /* NetworkModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000018 /* NetworkModels.swift */; };
+		A0000000000000000000001B /* WatcherModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001A /* WatcherModels.swift */; };
+		A0000000000000000000001D /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001C /* NetworkService.swift */; };
+		A0000000000000000000001F /* NetworkStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000001E /* NetworkStore.swift */; };
+		A00000000000000000000021 /* PingStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000020 /* PingStore.swift */; };
+		A00000000000000000000023 /* PacketParsers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000022 /* PacketParsers.swift */; };
+		A00000000000000000000025 /* WatcherStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000024 /* WatcherStore.swift */; };
+		A00000000000000000000027 /* UpdateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000026 /* UpdateStore.swift */; };
+		A0000000000000000000002B /* IPAddressValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002A /* IPAddressValidator.swift */; };
+		A0000000000000000000002D /* NetworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002C /* NetworkView.swift */; };
+		A0000000000000000000002F /* InterfaceEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0000000000000000000002E /* InterfaceEditorView.swift */; };
+		A00000000000000000000031 /* NewServiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000030 /* NewServiceView.swift */; };
+		A00000000000000000000033 /* ToolsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000032 /* ToolsView.swift */; };
+		A00000000000000000000035 /* WatcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000034 /* WatcherView.swift */; };
+		A00000000000000000000037 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000000000000000000036 /* SettingsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A00000000000000000000008 /* macbox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = macbox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0000000000000000000000F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A00000000000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00000000000000000000012 /* MacBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacBoxApp.swift; sourceTree = "<group>"; };
+		A00000000000000000000014 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A00000000000000000000016 /* AppInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfo.swift; sourceTree = "<group>"; };
+		A00000000000000000000018 /* NetworkModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkModels.swift; sourceTree = "<group>"; };
+		A0000000000000000000001A /* WatcherModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatcherModels.swift; sourceTree = "<group>"; };
+		A0000000000000000000001C /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
+		A0000000000000000000001E /* NetworkStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkStore.swift; sourceTree = "<group>"; };
+		A00000000000000000000020 /* PingStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingStore.swift; sourceTree = "<group>"; };
+		A00000000000000000000022 /* PacketParsers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PacketParsers.swift; sourceTree = "<group>"; };
+		A00000000000000000000024 /* WatcherStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatcherStore.swift; sourceTree = "<group>"; };
+		A00000000000000000000026 /* UpdateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateStore.swift; sourceTree = "<group>"; };
+		A0000000000000000000002A /* IPAddressValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IPAddressValidator.swift; sourceTree = "<group>"; };
+		A0000000000000000000002C /* NetworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkView.swift; sourceTree = "<group>"; };
+		A0000000000000000000002E /* InterfaceEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceEditorView.swift; sourceTree = "<group>"; };
+		A00000000000000000000030 /* NewServiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewServiceView.swift; sourceTree = "<group>"; };
+		A00000000000000000000032 /* ToolsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolsView.swift; sourceTree = "<group>"; };
+		A00000000000000000000034 /* WatcherView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatcherView.swift; sourceTree = "<group>"; };
+		A00000000000000000000036 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000000000000000000006 = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000009 /* MacBox */,
+				A00000000000000000000007 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000000000000000000007 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000008 /* macbox.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000000000000000000009 /* MacBox */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000011 /* Info.plist */,
+				A00000000000000000000012 /* MacBoxApp.swift */,
+				A00000000000000000000014 /* ContentView.swift */,
+				A0000000000000000000000A /* Models */,
+				A0000000000000000000000B /* Services */,
+				A0000000000000000000000C /* Utilities */,
+				A0000000000000000000000D /* Views */,
+				A0000000000000000000000E /* Resources */,
+			);
+			path = MacBox;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A00000000000000000000016 /* AppInfo.swift */,
+				A00000000000000000000018 /* NetworkModels.swift */,
+				A0000000000000000000001A /* WatcherModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000B /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000001C /* NetworkService.swift */,
+				A0000000000000000000001E /* NetworkStore.swift */,
+				A00000000000000000000020 /* PingStore.swift */,
+				A00000000000000000000022 /* PacketParsers.swift */,
+				A00000000000000000000024 /* WatcherStore.swift */,
+				A00000000000000000000026 /* UpdateStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000C /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000002A /* IPAddressValidator.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000D /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000002C /* NetworkView.swift */,
+				A0000000000000000000002E /* InterfaceEditorView.swift */,
+				A00000000000000000000030 /* NewServiceView.swift */,
+				A00000000000000000000032 /* ToolsView.swift */,
+				A00000000000000000000034 /* WatcherView.swift */,
+				A00000000000000000000036 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A0000000000000000000000E /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				A0000000000000000000000F /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000000000000000000002 /* macbox */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0000000000000000000003D /* Build configuration list for PBXNativeTarget "macbox" */;
+			buildPhases = (
+				A00000000000000000000003 /* Sources */,
+				A00000000000000000000005 /* Frameworks */,
+				A00000000000000000000004 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = macbox;
+			productName = macbox;
+			productReference = A00000000000000000000008 /* macbox.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1530;
+				LastUpgradeCheck = 1530;
+				TargetAttributes = {
+					A00000000000000000000002 = {
+						CreatedOnToolsVersion = 15.3;
+					};
+				};
+			};
+			buildConfigurationList = A0000000000000000000003A /* Build configuration list for PBXProject "macbox" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000000000000000000006;
+			productRefGroup = A00000000000000000000007 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000000000000000000002 /* macbox */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000000000000000000004 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000010 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000000000000000000003 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000013 /* MacBoxApp.swift in Sources */,
+				A00000000000000000000015 /* ContentView.swift in Sources */,
+				A00000000000000000000017 /* AppInfo.swift in Sources */,
+				A00000000000000000000019 /* NetworkModels.swift in Sources */,
+				A0000000000000000000001B /* WatcherModels.swift in Sources */,
+				A0000000000000000000001D /* NetworkService.swift in Sources */,
+				A0000000000000000000001F /* NetworkStore.swift in Sources */,
+				A00000000000000000000021 /* PingStore.swift in Sources */,
+				A00000000000000000000023 /* PacketParsers.swift in Sources */,
+				A00000000000000000000025 /* WatcherStore.swift in Sources */,
+				A00000000000000000000027 /* UpdateStore.swift in Sources */,
+				A0000000000000000000002B /* IPAddressValidator.swift in Sources */,
+				A0000000000000000000002D /* NetworkView.swift in Sources */,
+				A0000000000000000000002F /* InterfaceEditorView.swift in Sources */,
+				A00000000000000000000031 /* NewServiceView.swift in Sources */,
+				A00000000000000000000033 /* ToolsView.swift in Sources */,
+				A00000000000000000000035 /* WatcherView.swift in Sources */,
+				A00000000000000000000037 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A00000000000000000000038 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A00000000000000000000039 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		A0000000000000000000003B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 210;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MacBox/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 2.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.argnux.macbox;
+				PRODUCT_NAME = MacBox;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		A0000000000000000000003C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 210;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MacBox/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 2.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.argnux.macbox;
+				PRODUCT_NAME = MacBox;
+				SDKROOT = macosx;
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A0000000000000000000003A /* Build configuration list for PBXProject "macbox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000000000000000000038 /* Debug */,
+				A00000000000000000000039 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A0000000000000000000003D /* Build configuration list for PBXNativeTarget "macbox" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0000000000000000000003B /* Debug */,
+				A0000000000000000000003C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000000000000000000001 /* Project object */;
+}

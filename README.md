@@ -1,19 +1,38 @@
-# README
+# MacBox
 
-## About
+MacBox is a native SwiftUI macOS app for inspecting hardware network ports and managing their network services.
 
-This is the official Wails Vue-TS template.
+## Version
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+Current version: `2.1.0`.
 
-## Live Development
+## Features
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+- Live hardware interface list from native SystemConfiguration and dynamic network state APIs
+- Create, rename, delete, DHCP, and manual IPv4 service configuration through native macOS network preferences
+- Ping tool backed by `/sbin/ping`
+- UDP/TCP packet watcher with raw hex, ASCII, and MAVLink v1/v2 parsing
+- GitHub release check for compatible macOS zip assets
 
-## Building
+## Build
 
-To build a redistributable, production mode package, use `wails build`.
+Open `macbox.xcodeproj` in Xcode, or build from the terminal. If your active developer directory points at Command Line Tools, keep `DEVELOPER_DIR` on the command:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+xcodebuild -project macbox.xcodeproj \
+  -scheme macbox \
+  -configuration Debug \
+  -destination 'platform=macOS' \
+  -derivedDataPath /private/tmp/macbox-derived-data \
+  CODE_SIGNING_ALLOWED=NO \
+  build
+```
+
+The app supports macOS only.
+
+## Release
+
+Publish a GitHub release whose tag matches the app version, for example `v2.1.0`. The release workflow validates the tag against `MacBox/Info.plist`, builds a clean Apple Silicon `MacBox.app`, and uploads a zip named like `macbox_v2.1.0_arm64.zip`.
+
+The in-app updater checks the latest GitHub release and offers the compatible macOS zip asset when the release version is newer than the installed app.
